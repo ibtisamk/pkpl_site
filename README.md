@@ -26,3 +26,8 @@ cd pkpl_site
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
+
+## 👤 Author
+**Ibtisam Khalid**  
+Creator & Technical Lead for the Pakistani Pro Clubs League digital platform.
+
