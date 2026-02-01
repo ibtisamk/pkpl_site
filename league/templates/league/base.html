@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PKPL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    {% load static %}
+    
+</head>
+
+<body class="bg-gray-900 text-white">
+
+    <!-- NAVBAR -->
+    <nav class="w-full bg-white/10 backdrop-blur-md border-b border-white/20 fixed top-0 left-0 z-50">
+      <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+
+        <!-- LEFT: LOGO -->
+        <a href="/ppl3/" class="flex items-center gap-3">
+          <img 
+            src="{% static 'league/ppl1/PPLlogo.JPG' %}" 
+            alt="PPL Logo" 
+            class="w-12 h-auto drop-shadow-md"
+          />
+          <span class="text-white font-bold text-xl tracking-wide">PPL</span>
+        </a>
+
+        <!-- CENTER: NAV LINKS -->
+        <div class="hidden md:flex items-center gap-8 text-blue-100/90 font-medium">
+            <a href="/teams/" class="hover:text-white transition">Teams</a>
+            <a href="{% url 'all_players' %}" class="px-4 py-2 text-white hover:text-yellow-400">Players</a>
+            <a href="/rankings/" class="hover:text-white transition">Rankings</a>
+            <a href="/story/" class="hover:text-white transition">Story</a>
+            <a href="/ppl1/" class="hover:text-white transition">PPL 1.0</a>
+            <a href="/ppl2/" class="hover:text-white transition">PPL 2.0</a>
+            <a href="/ppl3hype/" class="hover:text-white transition">PPL 3.0</a>
+          </div>
+          
+
+        <!-- RIGHT: REGISTER BUTTON -->
+        <a 
+          href="/register/" 
+          class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded-xl shadow-md transition"
+        >
+          Register
+        </a>
+
+      </div>
+    </nav>
+
+    <!-- SPACER (prevents content from hiding behind navbar) -->
+    <div class="h-20"></div>
+
+    <!-- PAGE CONTENT -->
+    {% block content %}{% endblock %}
+
+</body>
+</html>

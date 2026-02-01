@@ -1,0 +1,20 @@
+{% extends "league/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="max-w-xl mx-auto mt-20 text-center">
+
+    <div class="bg-white/10 p-10 rounded-xl backdrop-blur-md border border-white/20">
+        <h1 class="text-3xl font-bold text-white mb-4">Registration Submitted</h1>
+        <p class="text-gray-300 mb-6">
+            Thank you! Your registration has been received.  
+            Our admin team will review it and contact you soon.
+        </p>
+
+        <a href="/" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold">
+            Return Home
+        </a>
+    </div>
+
+</div>
+{% endblock %}

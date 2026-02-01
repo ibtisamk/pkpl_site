@@ -1,0 +1,122 @@
+{% extends "league/base.html" %}
+{% load static %}
+{% block content %}
+
+<!-- PREMIUM PPL3 BACKGROUND -->
+<div class="min-h-screen bg-gradient-to-b from-[#0b2f2f] via-[#0f3d4c] to-[#0b2f2f] text-white px-4 py-10">
+
+  <div class="max-w-6xl mx-auto space-y-14">
+
+    <!-- TEAM HEADER -->
+    <div class="text-center space-y-3">
+      <h1 class="text-4xl font-extrabold tracking-wide text-yellow-300 drop-shadow-lg">
+        {{ club.name }}
+      </h1>
+      <p class="text-blue-200/80 text-sm">
+        PPL 3.0 — Team Profile
+      </p>
+    </div>
+
+    <!-- TEAM STATS -->
+    <section>
+      <h2 class="text-2xl font-bold mb-4 text-yellow-300">Season Stats</h2>
+
+      {% if stats %}
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+
+        <div class="bg-white/5 border border-white/10 rounded-xl p-4 text-center backdrop-blur-xl shadow-xl">
+          <p class="text-blue-200 text-xs uppercase">Played</p>
+          <p class="text-yellow-300 text-xl font-bold">{{ stats.played }}</p>
+        </div>
+
+        <div class="bg-white/5 border border-white/10 rounded-xl p-4 text-center backdrop-blur-xl shadow-xl">
+          <p class="text-blue-200 text-xs uppercase">Wins</p>
+          <p class="text-yellow-300 text-xl font-bold">{{ stats.wins }}</p>
+        </div>
+
+        <div class="bg-white/5 border border-white/10 rounded-xl p-4 text-center backdrop-blur-xl shadow-xl">
+          <p class="text-blue-200 text-xs uppercase">Draws</p>
+          <p class="text-yellow-300 text-xl font-bold">{{ stats.draws }}</p>
+        </div>
+
+        <div class="bg-white/5 border border-white/10 rounded-xl p-4 text-center backdrop-blur-xl shadow-xl">
+          <p class="text-blue-200 text-xs uppercase">Losses</p>
+          <p class="text-yellow-300 text-xl font-bold">{{ stats.losses }}</p>
+        </div>
+
+        <div class="bg-white/5 border border-white/10 rounded-xl p-4 text-center backdrop-blur-xl shadow-xl">
+          <p class="text-blue-200 text-xs uppercase">Goals For</p>
+          <p class="text-yellow-300 text-xl font-bold">{{ stats.goals_for }}</p>
+        </div>
+
+        <div class="bg-white/5 border border-white/10 rounded-xl p-4 text-center backdrop-blur-xl shadow-xl">
+          <p class="text-blue-200 text-xs uppercase">Points</p>
+          <p class="text-yellow-300 text-xl font-bold">{{ stats.points }}</p>
+        </div>
+
+      </div>
+      {% else %}
+      <p class="text-blue-200/70">No stats available for this season.</p>
+      {% endif %}
+    </section>
+
+    <!-- FIXTURES -->
+    <section>
+      <h2 class="text-2xl font-bold mb-4 text-yellow-300">Fixtures</h2>
+
+      {% if fixtures %}
+      <div class="space-y-3">
+        {% for f in fixtures %}
+        <a href="{% url 'ppl3_match_detail' f.match.id %}"
+           class="block bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl hover:bg-white/10 transition">
+
+          <div class="flex justify-between items-center">
+            <span class="font-semibold">
+              {{ f.home_club.name }} vs {{ f.away_club.name }}
+            </span>
+            <span class="text-blue-200 text-sm">
+              {{ f.date|date:"M d, Y" }}
+            </span>
+          </div>
+
+          {% if f.match.is_played %}
+          <p class="text-yellow-300 font-bold mt-1">
+            Final Score: {{ f.match.home_goals }} - {{ f.match.away_goals }}
+          </p>
+          {% endif %}
+
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-blue-200/70">No fixtures available.</p>
+      {% endif %}
+    </section>
+
+    <!-- SQUAD -->
+    <section>
+      <h2 class="text-2xl font-bold mb-4 text-yellow-300">Squad</h2>
+
+      {% if players %}
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+
+        {% for p in players %}
+        <a href="{% url 'ppl3_player' p.id %}"
+           class="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl shadow-xl hover:bg-white/10 transition text-center">
+
+          <p class="font-semibold text-blue-200">{{ p.gamertag }}</p>
+          <p class="text-xs text-blue-100/70">{{ p.position }}</p>
+
+        </a>
+        {% endfor %}
+
+      </div>
+      {% else %}
+      <p class="text-blue-200/70">No players registered.</p>
+      {% endif %}
+    </section>
+
+  </div>
+</div>
+
+{% endblock %}

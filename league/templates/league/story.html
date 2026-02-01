@@ -1,0 +1,68 @@
+{% extends "league/base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="min-h-screen bg-gradient-to-b from-[#0a0f24] via-[#0d1533] to-[#0a0f24] text-white py-16 px-4">
+
+  <!-- HEADER -->
+  <div class="max-w-4xl mx-auto text-center mb-12">
+    <h1 class="text-4xl font-extrabold mb-3">Our Story</h1>
+    <p class="text-blue-100/80 text-lg">
+      The journey of Pakistan Pro Clubs League — from humble beginnings to a national community.
+    </p>
+  </div>
+
+  <!-- STORY SECTION -->
+  <div class="max-w-4xl mx-auto space-y-10">
+
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-2xl font-bold mb-3">How It Started</h2>
+      <p class="text-blue-100/80 leading-relaxed">
+        PKPL began as a small community of passionate players who wanted to bring structure, competition, and professionalism to Pakistan’s Pro Clubs scene. The founders had been part of the FIFA world for years — competing in online tournaments, playing Ultimate Team, and grinding through countless Pro Clubs seasons long before PKPL existed. What started as a casual idea between experienced players quickly evolved into a vision: a proper league system for the Pakistani community. 
+        Inspired by platforms like VPG and driven by an overwhelming community response, the project grew far beyond expectations. Friendly matches turned into organised fixtures, casual squads became dedicated clubs, and a handful of players expanded into a thriving community of over 100 active competitors. With each season, PKPL introduced better structure, stronger competition, and increasingly exciting prize pools — transforming a simple idea into one of the most recognised Pro Clubs leagues in the region.
+      </p>
+    </div>
+
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-2xl font-bold mb-3">The Rise of PPL</h2>
+      <p class="text-blue-100/80 leading-relaxed">
+        In just a few months, PPL has grown into a multi‑season competition featuring talented clubs from
+        across the Pakistani community worldwide. Each season brings new rivalries, new stories, and
+        unforgettable moments. The community is growing with active feedback, and improvement in structure, viewership, participation, competition and tactics.
+
+        
+        OUR VISION: To provide a platform for Pakistani FIFA players to compete in professional pro clubs competition.
+      </p>
+    </div>
+
+    <!-- ARCHIVES SECTION -->
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-2xl font-bold mb-4">League Archives</h2>
+
+      <div class="space-y-4">
+
+        <a href="/ppl1/" class="block bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-4 transition">
+          <h3 class="text-xl font-semibold">PPL 1.0 Archive</h3>
+          <p class="text-blue-100/70 text-sm">Full standings, knockouts, awards, and season recap.</p>
+        </a>
+        
+
+        <a href="/ppl2/" class="block bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-4 transition">
+          <h3 class="text-xl font-semibold">PPL 2.0 Archive</h3>
+          <p class="text-blue-100/70 text-sm">Full league table, knockouts, awards, and season recap.</p>
+        </a>
+        
+
+        <a href="/ppl3/" class="block bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-4 transition">
+          <h3 class="text-xl font-semibold">PPL 3.0 (Current Season)</h3>
+          <p class="text-blue-100/70 text-sm">Live fixtures, teams, and updates.</p>
+        </a>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "league/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="max-w-xl mx-auto mt-10">
+
+    <h1 class="text-3xl font-bold text-white mb-6">Player Registration</h1>
+
+    <form method="POST" class="space-y-6 bg-white/10 p-8 rounded-xl backdrop-blur-md border border-white/20">
+        {% csrf_token %}
+
+        <!-- NAME -->
+        <div>
+            <label class="text-white">Player Name / ID*</label>
+            <input type="text" name="name" value="{{ form.name.value }}"
+                   class="w-full bg-slate-800 text-white border border-slate-500 rounded-lg p-3">
+        </div>
+
+        <!-- CONTACT -->
+        <div>
+            <label class="text-white">Contact Number*</label>
+            <input type="text" name="contact" value="{{ form.contact.value }}"
+                   class="w-full bg-slate-800 text-white border border-slate-500 rounded-lg p-3">
+        </div>
+
+        <!-- PREFERRED CLUB -->
+        <div>
+            <label class="text-white">Preferred Club (or Free Agent)</label>
+            <input type="text" name="preferred_club" value="{{ form.preferred_club.value }}"
+                   class="w-full bg-slate-800 text-white border border-slate-500 rounded-lg p-3">
+        </div>
+
+        <!-- POSITION -->
+        <div>
+            <label class="text-white">Position*</label>
+            <select name="position"
+                    class="w-full bg-slate-800 text-white border border-slate-500 rounded-lg p-3">
+                {% for value, label in form.position.field.choices %}
+                    <option value="{{ value }}" {% if form.position.value == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- REGION -->
+        <div>
+            <label class="text-white">Region</label>
+            <select name="region"
+                    class="w-full bg-slate-800 text-white border border-slate-500 rounded-lg p-3">
+                {% for value, label in form.region.field.choices %}
+                    <option value="{{ value }}" {% if form.region.value == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- PLATFORM -->
+        <div>
+            <label class="text-white">Platform</label>
+            <select name="platform"
+                    class="w-full bg-slate-800 text-white border border-slate-500 rounded-lg p-3">
+                {% for value, label in form.platform.field.choices %}
+                    <option value="{{ value }}" {% if form.platform.value == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- SUBMIT -->
+        <button class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold">
+            Submit Registration
+        </button>
+
+    </form>
+
+</div>
+{% endblock %}

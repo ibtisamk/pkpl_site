@@ -1,0 +1,333 @@
+{% extends "league/base.html" %}
+{% load static %}
+{% block content %}
+
+<!-- PAGE WRAPPER -->
+<div class="min-h-screen bg-[#1a1a1a] text-white pb-20">
+
+  <!-- HEADER WITH BLUE LIGHTNING BORDER -->
+  <section class="relative w-full text-white py-20 px-4 overflow-hidden">
+
+    <!-- BLUE LIGHTNING BORDER EFFECT -->
+    <div class="absolute top-0 left-0 w-full h-40 bg-gradient-to-r from-blue-600 via-blue-400 to-blue-600 opacity-30 blur-2xl"></div>
+
+    <div class="max-w-5xl mx-auto text-center relative z-10">
+
+      <!-- PPL LOGO -->
+      <img 
+        src="{% static 'league/ppl2/PPLlogo.JPG' %}" 
+        alt="PPL Logo" 
+        class="mx-auto w-40 h-auto mb-6 drop-shadow-xl"
+      />
+
+      <!-- TITLE -->
+      <h1 class="text-4xl md:text-5xl font-extrabold tracking-wide mb-4">
+        PPL Season 2.0 — Archive
+      </h1>
+
+      <!-- WINNERS SECTION -->
+      <div class="mt-6 flex flex-col items-center gap-3">
+        <p class="text-lg md:text-xl font-semibold text-blue-100/90">
+          Champions — <span class="text-white font-bold">Southall United</span>
+        </p>
+
+        <img 
+          src="{% static 'league/ppl2/southall-champions-logo.jpg' %}" 
+          alt="Southall Champions Logo" 
+          class="w-24 h-auto opacity-90 drop-shadow-lg"
+        />
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- LEAGUE TABLE -->
+  <section class="max-w-5xl mx-auto px-4 mt-16">
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-3xl font-bold mb-4">Final League Table</h2>
+
+      <img 
+        src="{% static 'league/ppl2/league-table-ppl2.jpg' %}" 
+        alt="League Table" 
+        class="rounded-xl w-full mb-4"
+      />
+
+      <p class="text-blue-100/80 leading-relaxed">
+        The league stage of PPL 2.0 delivered intensity from start to finish.  
+        The final standings locked in the top 8 teams for the quarterfinals, with seeding determining the knockout matchups.  
+        The road to glory officially began here.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- WEEK 1 STATS -->
+  <section class="max-w-5xl mx-auto px-4 mt-16 space-y-16">
+
+    <!-- TOP SCORERS -->
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-3xl font-bold mb-4">Week 1 — Top Scorers</h2>
+
+      <img 
+        src="{% static 'league/ppl2/top-scorers-ppl2.jpg' %}" 
+        alt="Top Scorers" 
+        class="rounded-xl w-full mb-4"
+      />
+
+      <p class="text-blue-100/80 leading-relaxed">
+        Goals win games — and these attackers set the early benchmark with lethal finishing and clinical movement.
+      </p>
+    </div>
+
+    <!-- TOP ASSISTERS -->
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-3xl font-bold mb-4">Week 1 — Top Assisters</h2>
+
+      <img 
+        src="{% static 'league/ppl2/top-assisters-ppl2.jpg' %}" 
+        alt="Top Assisters" 
+        class="rounded-xl w-full mb-4"
+      />
+
+      <p class="text-blue-100/80 leading-relaxed">
+        Creativity, vision, and precision passing — these players created magic when it mattered most.
+      </p>
+    </div>
+
+  </section>
+
+
+  <!-- TEAM OF THE WEEK SECTIONS -->
+  <section class="max-w-5xl mx-auto px-4 mt-16 space-y-16">
+
+    <!-- TOTW 1 -->
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-3xl font-bold mb-4">Team of the Week — Week 1</h2>
+
+      <img 
+        src="{% static 'league/ppl2/totw1-ppl2.jpg' %}" 
+        alt="TOTW 1" 
+        class="rounded-xl w-full mb-4"
+      />
+
+      <p class="text-blue-100/80 leading-relaxed">
+        The standout XI from an action-packed opening week — consistency, class, and clutch performances.
+      </p>
+    </div>
+
+    <!-- TOTW 2 -->
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-3xl font-bold mb-4">Team of the Week — Week 2</h2>
+
+      <img 
+        src="{% static 'league/ppl2/totw2-ppl2.jpg' %}" 
+        alt="TOTW 2" 
+        class="rounded-xl w-full mb-4"
+      />
+
+      <p class="text-blue-100/80 leading-relaxed">
+        Week 2 delivered another round of elite performances — these players dominated the pitch.
+      </p>
+    </div>
+
+  </section>
+
+
+  <!-- PRESS CONFERENCE -->
+  <section class="max-w-5xl mx-auto px-4 mt-16">
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-3xl font-bold mb-4">Pre-Knockout Press Conference</h2>
+
+      <p class="text-blue-100/80 leading-relaxed">
+        Before the knockout stage kicked off, PPL 2.0 delivered one of the most entertaining press conferences in league history.  
+        Creative questions, bold captain reactions, banter, and pure entertainment set the tone for the battles ahead.  
+        Mind games, tension, and big-game energy — the perfect storm before the storm.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- SEMIFINALS -->
+  <section class="max-w-5xl mx-auto px-4 mt-16 space-y-16">
+
+    <!-- SEMI 1 -->
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-3xl font-bold mb-4">Semifinal — Southall United</h2>
+
+      <img 
+        src="{% static 'league/ppl2/semi-finals1-ppl2.jpg' %}" 
+        alt="Semifinal 1" 
+        class="rounded-xl w-full mb-4"
+      />
+
+      <p class="text-blue-100/80 leading-relaxed">
+        After a tough bout and a strong fight, Southall United clutched their ticket to the finals with a resilient performance.
+      </p>
+    </div>
+
+    <!-- SEMI 2 -->
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-3xl font-bold mb-4">Semifinal — Hamari FC</h2>
+
+      <img 
+        src="{% static 'league/ppl2/semi-finals2-ppl2.jpg' %}" 
+        alt="Semifinal 2" 
+        class="rounded-xl w-full mb-4"
+      />
+
+      <p class="text-blue-100/80 leading-relaxed">
+        Hamari FC beat Rat FC 3–2 in a thrilling semifinal to secure their spot in the grand final.
+      </p>
+    </div>
+
+  </section>
+
+
+  <!-- FINALS -->
+  <section class="max-w-5xl mx-auto px-4 mt-16">
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-3xl font-bold mb-4">Grand Final — Best of 3</h2>
+
+      <img 
+        src="{% static 'league/ppl2/finals-ppl2.jpg' %}" 
+        alt="Finals" 
+        class="rounded-xl w-full mb-4"
+      />
+
+      <p class="text-blue-100/80 leading-relaxed">
+        <strong>Leg 1:</strong> Hamari FC win on penalties  
+        <br>
+        <strong>Leg 2:</strong> Southall United win 3–0  
+        <br>
+        <strong>Leg 3:</strong> Southall United win on penalties  
+        <br><br>
+        Southall United are the Season 2 Champions — a clutch, resilient, unforgettable performance.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- TEAM OF THE SEASON -->
+  <section class="max-w-5xl mx-auto px-4 mt-16">
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-3xl font-bold mb-4">Team of the Season</h2>
+
+      <img 
+        src="{% static 'league/ppl2/tots-ppl2.jpg' %}" 
+        alt="Team of the Season" 
+        class="rounded-xl w-full"
+      />
+
+      <p class="text-blue-100/80 leading-relaxed mt-4">
+        From rock-solid defenders to midfield engines and ruthless finishers — this XI represents pure excellence.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- AWARDS -->
+  <section class="max-w-5xl mx-auto px-4 mt-16 space-y-16">
+
+    <!-- PLAYER OF THE SEASON -->
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg text-center">
+      <h2 class="text-3xl font-bold mb-4">Player of the Season</h2>
+
+      <img 
+        src="{% static 'league/ppl2/player-of-the-season-ppl2.jpg' %}" 
+        alt="Player of the Season" 
+        class="rounded-xl w-full mb-4"
+      />
+
+      <p class="text-xl text-blue-100/90 font-semibold">Navyan</p>
+    </div>
+
+    <!-- TOP SCORER -->
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg text-center">
+      <h2 class="text-3xl font-bold mb-4">Top Scorer</h2>
+
+      <img 
+        src="{% static 'league/ppl2/top-scorer-ppl2.jpg' %}" 
+        alt="Top Scorer" 
+        class="rounded-xl w-full mb-4"
+      />
+
+      <p class="text-xl text-blue-100/90 font-semibold">Tayyab — 27 Goals</p>
+    </div>
+
+    <!-- TOP ASSISTER -->
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg text-center">
+      <h2 class="text-3xl font-bold mb-4">Top Assister</h2>
+
+      <img 
+        src="{% static 'league/ppl2/top-assisters-ppl2.jpg' %}" 
+        alt="Top Assisters" 
+        class="rounded-xl w-full mb-4"
+      />
+
+      <p class="text-xl text-blue-100/90 font-semibold">Meko — 22 Assists</p>
+    </div>
+
+    <!-- BEST DEFENDER -->
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg text-center">
+      <h2 class="text-3xl font-bold mb-4">Best Defender</h2>
+
+      <img 
+        src="{% static 'league/ppl2/best-defender-ppl2.jpg' %}" 
+        alt="Best Defender" 
+        class="rounded-xl w-full mb-4"
+      />
+
+      <p class="text-xl text-blue-100/90 font-semibold">Faizzi</p>
+    </div>
+
+    <!-- BEST MIDFIELDER -->
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg text-center">
+      <h2 class="text-3xl font-bold mb-4">Best Midfielder</h2>
+
+      <img 
+        src="{% static 'league/ppl2/best-midfielder-ppl2.jpg' %}" 
+        alt="Best Midfielder" 
+        class="rounded-xl w-full mb-4"
+      />
+
+      <p class="text-xl text-blue-100/90 font-semibold">Sohaib Jaffar</p>
+    </div>
+
+  </section>
+
+
+  <!-- CONTROVERSIES SECTION -->
+  <section class="max-w-5xl mx-auto px-4 mt-20">
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-lg">
+      <h2 class="text-3xl font-bold mb-6">Controversies & Storylines</h2>
+
+      <p class="text-blue-100/80 leading-relaxed mb-6">
+        PPL 2.0 wasn’t just football — it was chaos, drama, transfers, ego battles, and clutch storylines that shaped the entire season.
+      </p>
+
+      <h3 class="text-2xl font-semibold mb-2">1. The R9 Transfer Earthquake</h3>
+      <p class="text-blue-100/80 mb-6">
+        Pakistani Lions entered Season 2 as defending champions — until their midfield engine R9 left to join Hamari FC.  
+        He became Midfielder of the Season, but the gold slipped away. A dynasty shaken.
+      </p>
+
+      <h3 class="text-2xl font-semibold mb-2">2. Basho vs Navyan — The Rivalry</h3>
+      <p class="text-blue-100/80 mb-6">
+        Season 1’s superstar Basho entered PPL 2.0 with unmatched confidence.  
+        Southall’s captain Navyan responded with a cold “We’ll see about that.”  
+        In the semifinals, Southall eliminated Basho’s Lions — ending their era.
+      </p>
+
+      <h3 class="text-2xl font-semibold mb-2">3. The German Goalkeeper Masterstroke</h3>
+      <p class="text-blue-100/80">
+        Just before the semifinals, Southall signed a German goalkeeper who became the backbone of their title run.  
+        Clutch saves, penalty heroics, and ice-cold composure — a season-defining signing.
+      </p>
+
+    </div>
+  </section>
+
+</div>
+
+{% endblock %}

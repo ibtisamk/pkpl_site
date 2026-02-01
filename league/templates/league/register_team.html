@@ -1,0 +1,197 @@
+{% extends "league/base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto mt-10">
+
+    <h1 class="text-3xl font-bold text-white mb-6">Team Registration</h1>
+
+    <form method="POST" class="space-y-8 bg-white/10 p-8 rounded-xl backdrop-blur-md border border-white/20">
+        {% csrf_token %}
+
+        <!-- TEAM INFO -->
+        <div>
+            <h2 class="text-xl font-semibold text-white mb-4">Team Information</h2>
+
+            <label class="text-white">Team Name*</label>
+            <input type="text" name="team_name"
+                   class="w-full bg-slate-800 text-white border border-slate-500 rounded-lg p-3 mb-4">
+
+            <label class="text-white">Founded</label>
+            <input type="text" name="founded"
+                   class="w-full bg-slate-800 text-white border border-slate-500 rounded-lg p-3 mb-4">
+
+            <label class="text-white">Stadium</label>
+            <input type="text" name="stadium"
+                   class="w-full bg-slate-800 text-white border border-slate-500 rounded-lg p-3 mb-4">
+
+            <label class="text-white">Platform</label>
+            {{ form.platform }}
+
+            <label class="text-white">Region</label>
+            {{ form.region }}
+        </div>
+
+        <!-- CAPTAIN INFO -->
+        <div>
+            <h2 class="text-xl font-semibold text-white mb-4">Captain Information</h2>
+
+            <label class="text-white">Captain Name</label>
+            <input type="text" name="captain_name"
+                   class="w-full bg-slate-800 text-white border border-slate-500 rounded-lg p-3 mb-4">
+
+            <label class="text-white">Captain WhatsApp</label>
+            <input type="text" name="captain_whatsapp"
+                   class="w-full bg-slate-800 text-white border border-slate-500 rounded-lg p-3 mb-4">
+
+            <label class="text-white">Captain Position</label>
+            <select name="captain_position"
+                    class="w-full bg-slate-800 text-white border border-slate-500 rounded-lg p-3 mb-4">
+                {% for value, label in positions %}
+                    <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- PLAYERS -->
+        <div>
+            <h2 class="text-xl font-semibold text-white mb-4">Players (Minimum 1, Maximum 15)</h2>
+
+            <input type="hidden" name="player_count" id="player_count" value="1">
+
+            <div id="players-container">
+
+                <!-- PLAYER 1 -->
+                <div class="player-row bg-white/5 p-4 rounded-lg mb-4">
+
+                    <h3 class="text-white font-semibold mb-2 player-title">Player 1</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                        <div>
+                            <label class="text-white">Player Name</label>
+                            <input type="text" name="player_name_1"
+                                   class="w-full bg-slate-800 text-white border border-slate-500 rounded-lg p-3">
+                        </div>
+
+                        <div>
+                            <label class="text-white">Position</label>
+                            <select name="player_position_1"
+                                    class="w-full bg-slate-800 text-white border border-slate-500 rounded-lg p-3">
+                                {% for value, label in positions %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <!-- REMOVE BUTTON (hidden for Player 1) -->
+                    <button type="button"
+                            class="remove-player mt-3 px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded hidden">
+                        Remove
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- ADD PLAYER BUTTON -->
+            <button type="button" id="add-player-btn"
+                    class="mt-4 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                Add another player
+            </button>
+        </div>
+
+        <button class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold">
+            Submit Registration
+        </button>
+
+    </form>
+
+</div>
+
+<!-- JAVASCRIPT -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const addBtn = document.getElementById("add-player-btn");
+    const container = document.getElementById("players-container");
+    const countInput = document.getElementById("player_count");
+
+    function renumberPlayers() {
+        const rows = container.querySelectorAll(".player-row");
+        rows.forEach((row, index) => {
+            const num = index + 1;
+            row.querySelector(".player-title").innerText = "Player " + num;
+
+            // Update input names
+            row.querySelector("input").setAttribute("name", "player_name_" + num);
+            row.querySelector("select").setAttribute("name", "player_position_" + num);
+
+            // Show remove button only if more than 1 player
+            const removeBtn = row.querySelector(".remove-player");
+            removeBtn.classList.toggle("hidden", num === 1);
+        });
+    }
+
+    addBtn.addEventListener("click", function () {
+        let count = parseInt(countInput.value);
+
+        if (count >= 15) {
+            alert("Maximum 15 players allowed");
+            return;
+        }
+
+        let newCount = count + 1;
+
+        let html = `
+        <div class="player-row bg-white/5 p-4 rounded-lg mb-4">
+            <h3 class="text-white font-semibold mb-2 player-title">Player ${newCount}</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-white">Player Name</label>
+                    <input type="text" name="player_name_${newCount}"
+                           class="w-full bg-slate-800 text-white border border-slate-500 rounded-lg p-3">
+                </div>
+
+                <div>
+                    <label class="text-white">Position</label>
+                    <select name="player_position_${newCount}"
+                            class="w-full bg-slate-800 text-white border border-slate-500 rounded-lg p-3">
+                        {% for value, label in positions %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <button type="button"
+                    class="remove-player mt-3 px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded">
+                Remove
+            </button>
+        </div>
+        `;
+
+        container.insertAdjacentHTML("beforeend", html);
+        countInput.value = newCount;
+
+        renumberPlayers();
+    });
+
+    // Delegate remove button clicks
+    container.addEventListener("click", function (e) {
+        if (e.target.classList.contains("remove-player")) {
+            e.target.closest(".player-row").remove();
+
+            let newCount = container.querySelectorAll(".player-row").length;
+            countInput.value = newCount;
+
+            renumberPlayers();
+        }
+    });
+
+});
+</script>
+
+{% endblock %}

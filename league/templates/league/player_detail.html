@@ -1,0 +1,76 @@
+{% extends "league/base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="max-w-4xl mx-auto mt-10 bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20">
+
+  <!-- PLAYER HEADER -->
+  <div class="text-center mb-8">
+    <h1 class="text-4xl font-bold text-gray-100">{{ player.gamertag }}</h1>
+    <p class="text-gray-300 text-lg">{{ player.position }}</p>
+  </div>
+
+  <!-- MULTI-SEASON STATS TABLE -->
+  <h2 class="text-2xl font-semibold mb-4 text-gray-100">Season Stats</h2>
+
+<table class="w-full text-left text-gray-200 mb-10">
+  <thead>
+    <tr class="border-b border-white/20 text-sm">
+      <th class="py-2 pr-6">Season</th>
+      <th class="py-2 text-center px-4">Apps</th>
+      <th class="py-2 text-center px-4">Goals</th>
+      <th class="py-2 text-center px-4">Assists</th>
+      <th class="py-2 text-center px-4">CS</th>
+      <th class="py-2 text-center px-4">AMR</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for row in season_rows %}
+    <tr class="border-b border-white/10 text-sm">
+      <td class="py-2 pr-6">{{ row.season.name }}</td>
+
+      {% if row.stats %}
+        <td class="py-2 text-center px-4">{{ row.stats.appearances }}</td>
+        <td class="py-2 text-center px-4">{{ row.stats.goals }}</td>
+        <td class="py-2 text-center px-4">{{ row.stats.assists }}</td>
+        <td class="py-2 text-center px-4">{{ row.stats.clean_sheets }}</td>
+        <td class="py-2 text-center px-4">
+          {% if row.avg_rating %}
+            {{ row.avg_rating }}
+          {% else %}
+            –
+          {% endif %}
+        </td>
+      {% else %}
+        <td class="py-2 text-center text-gray-500 px-4">–</td>
+        <td class="py-2 text-center text-gray-500 px-4">–</td>
+        <td class="py-2 text-center text-gray-500 px-4">–</td>
+        <td class="py-2 text-center text-gray-500 px-4">–</td>
+        <td class="py-2 text-center text-gray-500 px-4">–</td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+
+  <!-- AWARDS -->
+  <h2 class="text-2xl font-semibold mb-4 text-gray-100">Awards</h2>
+
+  {% if awards %}
+    <ul class="text-gray-200 space-y-2">
+      {% for award in awards %}
+        <li>
+          🏅 <strong>{{ award.titles|join:", " }}</strong> — {{ award.season }}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-gray-400">No awards recorded.</p>
+  {% endif %}
+
+</div>
+
+{% endblock %}

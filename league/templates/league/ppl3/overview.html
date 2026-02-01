@@ -1,0 +1,105 @@
+{% extends "league/base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="min-h-screen bg-gradient-to-b from-[#0b2f2f] via-[#0f3d4c] to-[#0b2f2f] text-white px-4 py-10">
+
+  <div class="max-w-6xl mx-auto space-y-14">
+
+    <!-- HEADER -->
+    <div class="text-center space-y-2">
+      <h1 class="text-4xl font-extrabold tracking-wide text-yellow-300 drop-shadow-lg">
+        PPL 3.0 — Season Overview
+      </h1>
+      <p class="text-blue-200/80 text-sm">
+        Live standings, fixtures, groups, and knockout bracket
+      </p>
+    </div>
+
+    <!-- GROUP SUMMARY -->
+    <section>
+      <h2 class="text-2xl font-bold mb-4 text-yellow-300">Groups</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for g in groups %}
+        <a href="{% url 'ppl3_groups' %}"
+           class="block bg-white/5 border border-white/10 rounded-2xl p-5 backdrop-blur-xl shadow-xl hover:bg-white/10 transition">
+
+          <h3 class="text-xl font-semibold text-blue-200">{{ g.group.name }}</h3>
+
+          <ul class="mt-3 space-y-1 text-sm text-blue-100/80">
+            {% for row in g.standings %}
+            <li>
+              {{ forloop.counter }}. {{ row.team.name }}
+              <span class="text-blue-300">({{ row.points }} pts)</span>
+            </li>
+            {% empty %}
+            <li class="text-blue-200/60">No standings yet.</li>
+            {% endfor %}
+          </ul>
+
+        </a>
+        {% empty %}
+        <p class="text-blue-200/70">Groups not created yet.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- FIXTURES PREVIEW -->
+    <section>
+      <h2 class="text-2xl font-bold mb-4 text-yellow-300">Upcoming Fixtures</h2>
+
+      <div class="space-y-3">
+        {% for f in fixtures %}
+        <a href="{% url 'ppl3_match_detail' f.match.id %}"
+           class="block bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl hover:bg-white/10 transition">
+          <div class="flex justify-between items-center">
+            <span class="font-semibold">
+              {{ f.home_club.name }} vs {{ f.away_club.name }}
+            </span>
+            <span class="text-blue-200 text-sm">
+              {{ f.date|date:"M d, Y" }}
+            </span>
+          </div>
+        </a>
+        {% empty %}
+        <p class="text-blue-200/70">No fixtures scheduled yet.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- KNOCKOUT PREVIEW -->
+    <section>
+      <h2 class="text-2xl font-bold mb-4 text-yellow-300">Knockout Rounds</h2>
+
+      <div class="space-y-4">
+        {% for r in knockouts %}
+        <a href="{% url 'ppl3_knockouts' %}"
+           class="block bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl hover:bg-white/10 transition">
+
+          <h3 class="font-semibold text-blue-200">{{ r.round.round_type }}</h3>
+
+          <ul class="mt-2 space-y-1 text-sm text-blue-100/80">
+            {% for m in r.matches %}
+            <li>
+              {{ m.home }} vs {{ m.away }}
+              {% if m.played %}
+                <span class="text-yellow-300 font-bold"> — {{ m.score }}</span>
+              {% endif %}
+            </li>
+            {% empty %}
+            <li class="text-blue-200/60">No matches yet.</li>
+            {% endfor %}
+          </ul>
+
+        </a>
+        {% empty %}
+        <p class="text-blue-200/70">Knockout bracket not generated yet.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "league/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="max-w-3xl mx-auto mt-16 text-center">
+
+    <h1 class="text-4xl font-bold text-white mb-8">Register for PPL</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <a href="{% url 'register_team' %}"
+           class="p-8 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition">
+            <h2 class="text-2xl font-semibold text-white mb-2">Team Registration</h2>
+            <p class="text-gray-300 text-sm">
+                Register a full squad (captain + players)
+            </p>
+        </a>
+
+        <a href="{% url 'register_player' %}"
+           class="p-8 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition">
+            <h2 class="text-2xl font-semibold text-white mb-2">Player Registration</h2>
+            <p class="text-gray-300 text-sm">
+                Register as a free agent or join a club
+            </p>
+        </a>
+
+    </div>
+</div>
+{% endblock %}

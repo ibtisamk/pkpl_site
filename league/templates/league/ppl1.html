@@ -1,0 +1,199 @@
+{% extends "league/base.html" %}
+{% load static %}
+{% block content %}
+
+<!-- PAGE WRAPPER -->
+<div class="min-h-screen bg-gradient-to-b from-[#0d1733] via-[#12204a] to-[#0d1733] text-white pb-20">
+
+  <!-- HEADER SECTION -->
+  <section class="w-full text-white py-16 px-4">
+    <div class="max-w-5xl mx-auto text-center">
+
+      <!-- PPL LOGO -->
+      <img 
+        src="{% static 'league/ppl1/PPLlogo.JPG' %}" 
+        alt="PPL Logo" 
+        class="mx-auto w-40 h-auto mb-6 drop-shadow-xl"
+      />
+
+      <!-- TITLE -->
+      <h1 class="text-4xl md:text-5xl font-extrabold tracking-wide mb-4">
+        PPL Season 1.0 — Archive
+      </h1>
+
+      <!-- WINNERS SECTION -->
+      <div class="mt-6 flex flex-col items-center gap-3">
+        <p class="text-lg md:text-xl font-semibold text-blue-100/90">
+          Winners — <span class="text-white font-bold">Pakistani Lions</span>
+        </p>
+
+        <img 
+          src="{% static 'league/ppl1/PKLlogo.JPG' %}" 
+          alt="Pakistani Lions Logo" 
+          class="w-20 h-auto opacity-90 drop-shadow-lg"
+        />
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- GROUP STAGE SECTION -->
+  <section class="max-w-5xl mx-auto px-4 mt-10 space-y-16">
+
+    <!-- GROUP A -->
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-3xl font-bold mb-4">Group A Standings</h2>
+
+      <img 
+        src="{% static 'league/ppl1/group-a-standings-ppl1.jpg' %}" 
+        alt="Group A Standings" 
+        class="rounded-xl w-full mb-4"
+      />
+
+      <p class="text-blue-100/80 leading-relaxed">
+        Group 🅰️ finished with an intense and competitive set of performances. Pakistani Lions secured 1st place with 18 points and an impressive +17 GD, topping the table on goal difference. Close behind in 2nd place, Hamari FC also collected 18 points, finishing with a solid +9 GD. Tikka Boti FC claimed 3rd place with 15 points and a strong +17 GD, while KKG took 4th place, also on 15 points, ending with a –2 GD.
+        <br><br>
+        In the lower half, GreatGrapes finished 5th with 6 points and a –5 GD, followed by KL FC in 6th place, also on 6 points but with a –8 GD. Sacchay Musalman landed in 7th place with 3 points and a –9 GD, and Gujjar FC concluded the group in 8th place, also with 3 points and a –19 GD.
+        <br><br>
+        The top four teams—Pakistani Lions, Hamari FC, Tikka Boti FC, and KKG—advance to the main knockouts, while the bottom four—GreatGrapes, KL FC, Sacchay Musalman, and Gujjar FC—move into the plate knockout stage.
+      </p>
+    </div>
+
+    <!-- GROUP B -->
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-3xl font-bold mb-4">Group B Standings</h2>
+
+      <img 
+        src="{% static 'league/ppl1/group-b-standings-ppl1.jpg' %}" 
+        alt="Group B Standings" 
+        class="rounded-xl w-full mb-4"
+      />
+
+      <p class="text-blue-100/80 leading-relaxed">
+        Group 🅱️ delivered a dominant and competitive set of performances. Rat Futbol FC finished in 1st place staying undefeated with a commanding 21 points and an exceptional +20 GD. Pakistan secured 12 points with a strong +7 GD, followed by Pulao FC in 3rd place with +4 GD. Thicc FC claimed the final knockout spot with 12 points and a +2 GD.
+        <br><br>
+        Panteras placed 5th with 9 points and a –4 GD, AOA FC took 6th with 9 points and a –6 GD, Altar Londay finished 7th with 3 points and a –4 GD, and Gujjar FC closed the table with 3 points and a –19 GD.
+        <br><br>
+        Rat Futbol FC, Pakistan, Pulao FC, and Thicc FC advance to the main knockouts, while Panteras, AOA FC, Altar Londay, and Gujjar FC move on to the plate knockouts.
+      </p>
+    </div>
+
+  </section>
+
+
+  <!-- KNOCKOUTS SECTION -->
+  <section class="max-w-5xl mx-auto px-4 mt-20 space-y-16">
+
+    <!-- CHAMPIONS KNOCKOUT -->
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-3xl font-bold mb-4">Champions Knockout Bracket</h2>
+
+      <img 
+        src="{% static 'league/ppl1/knockout-bracket-ppl1.jpg' %}" 
+        alt="Champions Knockout Bracket" 
+        class="rounded-xl w-full mb-4"
+      />
+
+      <p class="text-blue-100/80 leading-relaxed">
+        <strong>Paki Lions 7–4 Tikka Boti</strong><br>
+        Paki Lions continued their dominant run with another high-scoring performance.
+        <br><br>
+        <strong>Hamari FC 8–5 Rat Futbol</strong><br>
+        Hamari FC showcased their offensive firepower in a thrilling semifinal.
+        <br><br>
+        <strong>Champions Final:</strong> Paki Lions vs Hamari FC
+      </p>
+    </div>
+
+    <!-- PLATE KNOCKOUT -->
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-3xl font-bold mb-4">Plate Knockout Bracket</h2>
+
+      <img 
+        src="{% static 'league/ppl1/plate-knockout-bracket-ppl1.jpg' %}" 
+        alt="Plate Knockout Bracket" 
+        class="rounded-xl w-full mb-4"
+      />
+
+      <p class="text-blue-100/80 leading-relaxed">
+        <strong>GreatGrapes 9–3 Altar Londay</strong><br>
+        A dominant attacking display.
+        <br><br>
+        <strong>Panteras 9–3 Sachay Musalman</strong><br>
+        Clinical finishing secured their finals spot.
+      </p>
+    </div>
+
+  </section>
+
+
+  <!-- FINALS SECTION -->
+  <section class="max-w-5xl mx-auto px-4 mt-20 space-y-16">
+
+    <!-- CHAMPIONS FINAL -->
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-3xl font-bold mb-4">Champions Final — Best of 3</h2>
+
+      <img 
+        src="{% static 'league/ppl1/final-scores-ppl1.jpg' %}" 
+        alt="Final Scores" 
+        class="rounded-xl w-full mb-4"
+      />
+
+      <p class="text-blue-100/80 leading-relaxed">
+        <strong>Match 1:</strong> Pakistani Lions 3–2 Hamari FC<br>
+        <strong>Match 2:</strong> Pakistani Lions 2–3 Hamari FC<br>
+        <strong>Match 3:</strong> Pakistani Lions 2–0 Hamari FC
+        <br><br>
+        Pakistani Lions proved the more consistent and composed side across the three games.
+      </p>
+
+      <img 
+        src="{% static 'league/ppl1/champions-banner-ppl1.jpg' %}" 
+        alt="Champions Banner" 
+        class="rounded-xl w-full mt-6"
+      />
+    </div>
+
+    <!-- PLATE FINAL -->
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-3xl font-bold mb-4">Plate Final — Best of 3</h2>
+
+      <p class="text-blue-100/80 leading-relaxed">
+        <strong>Match 1:</strong> GreatGrapes 3–0 Panteras<br>
+        <strong>Match 2:</strong> GreatGrapes 2–2 Panteras<br>
+        <strong>Match 3:</strong> GreatGrapes 3–1 Panteras
+        <br><br>
+        GreatGrapes demonstrated consistency, composure, and tactical sharpness.
+      </p>
+    </div>
+
+  </section>
+
+
+  <!-- AWARDS SECTION -->
+  <section class="max-w-5xl mx-auto px-4 mt-20 space-y-16">
+
+    <!-- PLAYER OF THE SEASON -->
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg text-center">
+      <h2 class="text-3xl font-bold mb-4">Player of the Season</h2>
+      <p class="text-xl text-blue-100/90 font-semibold">Qammar (Basho)</p>
+    </div>
+
+    <!-- TEAM OF THE SEASON -->
+    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <h2 class="text-3xl font-bold mb-4">Team of the Season</h2>
+
+      <img 
+        src="{% static 'league/ppl1/team-of-the-season-ppl1.jpg' %}" 
+        alt="Team of the Season" 
+        class="rounded-xl w-full"
+      />
+    </div>
+
+  </section>
+
+</div>
+
+{% endblock %}

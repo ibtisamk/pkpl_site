@@ -1,0 +1,276 @@
+{% extends "league/base.html" %}
+{% load static %}
+{% block content %}
+
+<!-- PAGE WRAPPER WITH STADIUM BLUE GRADIENT -->
+<div class="min-h-screen bg-gradient-to-b from-[#0a0f24] via-[#0d1533] to-[#0a0f24] text-white">
+
+  <!-- HERO SECTION -->
+  <section class="py-16 px-4">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-10">
+      <!-- PPL LOGO IN GLASS CIRCLE -->
+      <div class="flex-shrink-0 mx-auto md:mx-0">
+        <div class="bg-white/10 backdrop-blur-xl p-6 rounded-full shadow-2xl border border-white/20">
+          <img
+            src="{% static 'league/pplLogos/PPLlogo.JPG' %}"
+            alt="PPL Logo"
+            class="w-32 h-32 object-contain"
+          />
+        </div>
+      </div>
+
+      <!-- HERO TEXT -->
+      <div class="text-center md:text-left space-y-4">
+        <p class="uppercase tracking-[0.3em] text-xs text-blue-300">Pakistan Pro Clubs League</p>
+        <h1 class="text-4xl md:text-5xl font-extrabold leading-tight">
+          PPL 3.0
+        </h1>
+        <p class="text-lg text-blue-100/80">
+          All the Pakistani Pro Clubs. One stage.  
+          The next chapter of Pakistan’s Pro Clubs story.
+        </p>
+        <p class="text-sm text-blue-200/80 font-semibold">
+          Season kicks off: <span class="text-yellow-300">February 18, 2026</span>
+        </p>
+
+       <!-- HERO BUTTONS -->
+<div class="flex flex-wrap justify-center md:justify-start gap-3 pt-4">
+  <a
+    href="#teams"
+    class="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-blue-500/30 transition"
+  >
+    View Confirmed Teams
+  </a>
+
+  <a
+    href="/story/"
+    class="bg-white/10 hover:bg-white/20 border border-white/20 px-5 py-2.5 rounded-xl text-sm font-semibold backdrop-blur-md transition"
+  >
+    Our Story
+  </a>
+</div>
+
+
+  <!-- COUNTDOWN SECTION -->
+  <section class="py-10 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+      <h2 class="text-2xl md:text-3xl font-bold mb-3">Countdown to Kickoff</h2>
+      <p class="text-blue-100/80 mb-4 text-sm">
+        PPL 3.0 goes live on February 18, 2026.
+      </p>
+      <div
+        id="countdown"
+        class="inline-flex items-center gap-6 bg-white/5 border border-white/10 rounded-2xl px-8 py-4 backdrop-blur-md shadow-lg text-lg md:text-2xl font-semibold tracking-wide"
+      >
+        <span class="flex flex-col">
+          <span id="cd-days" class="text-yellow-300 text-2xl md:text-3xl">--</span>
+          <span class="text-xs uppercase tracking-wide text-blue-100/70">Days</span>
+        </span>
+        <span class="text-blue-200/60 text-2xl md:text-3xl">:</span>
+        <span class="flex flex-col">
+          <span id="cd-hours" class="text-yellow-300 text-2xl md:text-3xl">--</span>
+          <span class="text-xs uppercase tracking-wide text-blue-100/70">Hours</span>
+        </span>
+        <span class="text-blue-200/60 text-2xl md:text-3xl">:</span>
+        <span class="flex flex-col">
+          <span id="cd-mins" class="text-yellow-300 text-2xl md:text-3xl">--</span>
+          <span class="text-xs uppercase tracking-wide text-blue-100/70">Minutes</span>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONFIRMED TEAMS GRID -->
+  <section id="teams" class="py-14 px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+        <div>
+          <h2 class="text-2xl md:text-3xl font-bold">Confirmed Clubs for PPL 3.0</h2>
+          <p class="text-blue-100/80 text-sm mt-1">
+            14 teams. The FIFA Community, bright lights, and full commitment.
+          </p>
+        </div>
+        <p class="text-xs uppercase tracking-[0.25em] text-blue-300/80">
+          Official Club Lineups
+        </p>
+      </div>
+
+      <!-- GLASS GRID -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-6">
+
+        <!-- Altar Londay (ID 16) -->
+        <a href="{% url 'team_detail' 16 %}">
+          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
+            <div class="w-24 h-24 flex items-center justify-center rounded-xl bg-white/5 border border-white/20">
+              <span class="text-xs text-blue-100/80 uppercase tracking-wide">No Logo Yet</span>
+            </div>
+            <p class="mt-3 text-sm font-semibold tracking-wide">Altar Londay</p>
+          </div>
+        </a>
+      
+        <!-- KKG (ID 15) -->
+        <a href="{% url 'team_detail' 15 %}">
+          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
+            <img src="{% static 'league/pplLogos/KKGlogo.jpg' %}" class="w-24 h-24 object-contain" />
+            <p class="mt-3 text-sm font-semibold tracking-wide">KKG</p>
+          </div>
+        </a>
+      
+        <!-- Thicc FC (ID 14) -->
+        <a href="{% url 'team_detail' 14 %}">
+          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
+            <img src="{% static 'league/pplLogos/TFClogo.JPG' %}" class="w-24 h-24 object-contain" />
+            <p class="mt-3 text-sm font-semibold tracking-wide">Thicc FC</p>
+          </div>
+        </a>
+      
+        <!-- Sachay Musalman (ID 13) -->
+        <a href="{% url 'team_detail' 13 %}">
+          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
+            <img src="{% static 'league/pplLogos/SMlogo.JPG' %}" class="w-24 h-24 object-contain" />
+            <p class="mt-3 text-sm font-semibold tracking-wide">Sachay Musalman</p>
+          </div>
+        </a>
+      
+        <!-- Pulao FC (ID 12) -->
+        <a href="{% url 'team_detail' 12 %}">
+          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
+            <img src="{% static 'league/pplLogos/PFClogo.JPG' %}" class="w-24 h-24 object-contain" />
+            <p class="mt-3 text-sm font-semibold tracking-wide">Pulao FC</p>
+          </div>
+        </a>
+      
+        <!-- Glovify FC (ID 11) -->
+        <a href="{% url 'team_detail' 11 %}">
+          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
+            <span class="text-xs text-blue-100/80 uppercase tracking-wide">No Logo Yet</span>
+            </div>
+        </a>
+      
+        <!-- GreatGrapes (ID 10) -->
+        <a href="{% url 'team_detail' 10 %}">
+          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
+            <img src="{% static 'league/pplLogos/GGPlogo.JPG' %}" class="w-24 h-24 object-contain" />
+            <p class="mt-3 text-sm font-semibold tracking-wide">GreatGrapes</p>
+          </div>
+        </a>
+      
+        <!-- Gujjar FC (ID 9) -->
+        <a href="{% url 'team_detail' 9 %}">
+          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
+            <img src="{% static 'league/pplLogos/GFClogo.JPG' %}" class="w-24 h-24 object-contain" />
+            <p class="mt-3 text-sm font-semibold tracking-wide">Gujjar FC</p>
+          </div>
+        </a>
+      
+        <!-- AOA FC (ID 8) -->
+        <a href="{% url 'team_detail' 8 %}">
+          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
+            <img src="{% static 'league/pplLogos/AOAlogo.JPG' %}" class="w-24 h-24 object-contain" />
+            <p class="mt-3 text-sm font-semibold tracking-wide">AOA FC</p>
+          </div>
+        </a>
+      
+        <!-- Jawan FC (ID 7) -->
+        <a href="{% url 'team_detail' 7 %}">
+          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
+            <img src="{% static 'league/pplLogos/JFClogo.JPG' %}" class="w-24 h-24 object-contain" />
+            <p class="mt-3 text-sm font-semibold tracking-wide">Jawan FC</p>
+          </div>
+        </a>
+      
+        <!-- Pakistan FC (ID 6) -->
+        <a href="{% url 'team_detail' 6 %}">
+          <div class="bg-white/10 backdrop-blur-md border border-dashed border-blue-300/40 rounded-2xl p-4 shadow-lg flex flex-col items-center">
+            <div class="w-24 h-24 flex items-center justify-center rounded-xl bg-white/5 border border-white/20">
+              <span class="text-xs text-blue-100/80 uppercase tracking-wide">No Logo Yet</span>
+            </div>
+            <p class="mt-3 text-sm font-semibold tracking-wide">Pakistan FC</p>
+          </div>
+        </a>
+      
+        <!-- Rat Futbol (ID 5) -->
+        <a href="{% url 'team_detail' 5 %}">
+          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
+            <img src="{% static 'league/pplLogos/RATlogo.JPG' %}" class="w-24 h-24 object-contain" />
+            <p class="mt-3 text-sm font-semibold tracking-wide">Rat Futbol</p>
+          </div>
+        </a>
+      
+        <!-- Tikka Boti FC (ID 4) -->
+        <a href="{% url 'team_detail' 4 %}">
+          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
+            <img src="{% static 'league/pplLogos/TKBlogo.JPG' %}" class="w-24 h-24 object-contain" />
+            <p class="mt-3 text-sm font-semibold tracking-wide">Tikka Boti FC</p>
+          </div>
+        </a>
+      
+        <!-- Southall UTD (ID 3) -->
+        <a href="{% url 'team_detail' 3 %}">
+          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
+            <img src="{% static 'league/pplLogos/SHUlogo.JPG' %}" class="w-24 h-24 object-contain" />
+            <p class="mt-3 text-sm font-semibold tracking-wide">Southall UTD</p>
+          </div>
+        </a>
+      
+        <!-- Pakistani Lions (ID 2) -->
+        <a href="{% url 'team_detail' 2 %}">
+          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
+            <img src="{% static 'league/pplLogos/PKLlogo.JPG' %}" class="w-24 h-24 object-contain" />
+            <p class="mt-3 text-sm font-semibold tracking-wide">Pakistani Lions</p>
+          </div>
+        </a>
+      
+        <!-- Hamari FC (ID 1) -->
+        <a href="{% url 'team_detail' 1 %}">
+          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
+            <img src="{% static 'league/pplLogos/HFClogo.JPG' %}" class="w-24 h-24 object-contain" />
+            <p class="mt-3 text-sm font-semibold tracking-wide">Hamari FC</p>
+          </div>
+        </a>
+      
+      </div>
+      
+
+  <!-- FOOTER / CTA -->
+  <section class="py-10 px-4">
+    <div class="max-w-4xl mx-auto text-center space-y-3">
+      <p class="text-blue-100/80 text-sm">
+        This is just the beginning of PPL 3.0. Fixtures, stats, stories, and archives are next.
+      </p>
+      <a
+        href="/"
+        class="inline-flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/20 px-6 py-2.5 rounded-xl text-sm font-semibold backdrop-blur-md transition"
+      >
+        Return Home
+      </a>
+    </div>
+  </section>
+
+</div>
+
+<!-- COUNTDOWN SCRIPT -->
+<script>
+  const kickoff = new Date("Feb 18, 2026 00:00:00").getTime();
+  function updateCountdown() {
+    const now = new Date().getTime();
+    const diff = kickoff - now;
+
+    if (diff <= 0) {
+      document.getElementById("countdown").innerHTML = "PPL 3.0 HAS KICKED OFF";
+      return;
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    document.getElementById("cd-days").innerText = days;
+    document.getElementById("cd-hours").innerText = hours;
+    document.getElementById("cd-mins").innerText = mins;
+  }
+  updateCountdown();
+  setInterval(updateCountdown, 60000);
+</script>
+
+{% endblock %}

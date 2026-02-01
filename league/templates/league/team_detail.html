@@ -1,0 +1,142 @@
+{% extends "league/base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="max-w-6xl mx-auto mt-10 bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20">
+
+  <!-- TEAM HEADER -->
+
+<div class="text-center mb-10">
+  <img 
+    src="{% static 'league/pplLogos/' %}{{ club.short_name }}logo.JPG"
+    alt="{{ club.name }} logo"
+    class="h-24 mx-auto mb-4 object-contain drop-shadow-lg"
+  >
+
+  <h1 class="text-4xl font-bold text-gray-100">{{ club.name }}</h1>
+  <p class="text-gray-300 text-lg">{{ club.short_name }}</p>
+</div>
+
+  
+
+  <!-- ACHIEVEMENTS -->
+<div class="text-center mb-10">
+    <h2 class="text-2xl font-semibold text-gray-100 mb-2">Achievements</h2>
+  
+    {% if achievements.champion %}
+      <div class="text-yellow-300 text-lg font-medium">
+        🏆 Champion: {{ achievements.champion|join:", " }}
+      </div>
+    {% endif %}
+  
+    {% if achievements.runner_up %}
+      <div class="text-gray-300 text-lg font-medium">
+        🥈 Runner-Up: {{ achievements.runner_up|join:", " }}
+      </div>
+    {% endif %}
+  
+    {% if achievements.third %}
+      <div class="text-gray-300 text-lg font-medium">
+        🥉 Third Place: {{ achievements.third|join:", " }}
+      </div>
+    {% endif %}
+  
+    {% if achievements.semis %}
+      <div class="text-gray-300 text-lg font-medium">
+        🔥 Semi Finalist: {{ achievements.semis|join:", " }}
+      </div>
+    {% endif %}
+  
+    {% if achievements.groups %}
+      <div class="text-gray-300 text-lg font-medium">
+        🎯 Group Stage: {{ achievements.groups|join:", " }}
+      </div>
+    {% endif %}
+  </div>
+  
+
+  <!-- TEAM SEASON PERFORMANCE -->
+  <h2 class="text-2xl font-semibold mb-4 text-gray-100">Season Performance</h2>
+
+  <table class="w-full text-left text-gray-200 mb-10">
+    <thead>
+      <tr class="border-b border-white/20">
+        <th class="py-2 pr-6">Season</th>
+        <th class="py-2 text-center px-4">Played</th>
+        <th class="py-2 text-center px-4">Wins</th>
+        <th class="py-2 text-center px-4">Draws</th>
+        <th class="py-2 text-center px-4">Losses</th>
+        <th class="py-2 text-center px-4">Points</th>
+        <th class="py-2 text-center px-4">Finish</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for row in season_rows %}
+      <tr class="border-b border-white/10">
+        <td class="py-2 pr-6">{{ row.season.name }}</td>
+
+        {% if row.played %}
+          <td class="py-2 text-center px-4">{{ row.played }}</td>
+          <td class="py-2 text-center px-4">{{ row.wins }}</td>
+          <td class="py-2 text-center px-4">{{ row.draws }}</td>
+          <td class="py-2 text-center px-4">{{ row.losses }}</td>
+          <td class="py-2 text-center px-4">{{ row.points }}</td>
+          <td class="py-2 text-center px-4 capitalize">{{ row.finish|default:"–" }}</td>
+        {% else %}
+          <td class="py-2 text-center text-gray-500 px-4">–</td>
+          <td class="py-2 text-center text-gray-500 px-4">–</td>
+          <td class="py-2 text-center text-gray-500 px-4">–</td>
+          <td class="py-2 text-center text-gray-500 px-4">–</td>
+          <td class="py-2 text-center text-gray-500 px-4">–</td>
+          <td class="py-2 text-center text-gray-500 px-4">–</td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- SQUAD STATS -->
+  <h2 class="text-2xl font-semibold mb-4 text-gray-100">Squad Stats</h2>
+
+  <table class="w-full text-left text-gray-200">
+    <thead>
+      <tr class="border-b border-white/20 text-sm">
+        <th class="py-2 pr-6">Player</th>
+        {% for season in seasons %}
+          <th class="py-2 text-center px-4">{{ season.name }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for row in squad_rows %}
+      <tr class="border-b border-white/10 text-sm">
+        <td class="py-2 pr-6">
+          <a href="/player/{{ row.player.id }}/" class="hover:text-yellow-400 transition">
+            {{ row.player.gamertag }}
+          </a>
+        </td>
+
+        {% for ps in row.per_season %}
+          {% if ps.stats %}
+            <td class="py-2 text-center px-4 leading-tight">
+              <div>Apps: {{ ps.stats.appearances }}</div>
+              <div>G: {{ ps.stats.goals }}</div>
+              <div>A: {{ ps.stats.assists }}</div>
+              <div>CS: {{ ps.stats.clean_sheets }}</div>
+              <div>AMR: {{ ps.avg_rating|default:"–" }}</div>
+            </td>
+          {% else %}
+            <td class="py-2 text-center text-gray-500 px-4">–</td>
+          {% endif %}
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+</div>
+
+{% endblock %}

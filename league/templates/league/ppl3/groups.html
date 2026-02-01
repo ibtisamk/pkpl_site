@@ -1,0 +1,81 @@
+{% extends "league/base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="min-h-screen bg-gradient-to-b from-[#0b2f2f] via-[#0f3d4c] to-[#0b2f2f] text-white px-4 py-10">
+
+  <div class="max-w-6xl mx-auto space-y-12">
+
+    <!-- HEADER -->
+    <div class="text-center space-y-2">
+      <h1 class="text-4xl font-extrabold tracking-wide text-yellow-300 drop-shadow-lg">
+        PPL 3.0 — Group Standings
+      </h1>
+      <p class="text-blue-200/80 text-sm">
+        Live standings updated automatically after every match
+      </p>
+    </div>
+
+    <!-- GROUP TABLES -->
+    {% for g in groups %}
+    <section class="space-y-4">
+
+      <!-- GROUP TITLE -->
+      <h2 class="text-2xl font-bold text-yellow-300">
+        {{ g.group.name }}
+      </h2>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse bg-white/5 border border-white/10 rounded-2xl backdrop-blur-xl shadow-xl">
+          <thead class="bg-white/10 text-blue-200 uppercase text-xs tracking-wider">
+            <tr>
+              <th class="px-4 py-3">Club</th>
+              <th class="px-4 py-3 text-center">P</th>
+              <th class="px-4 py-3 text-center">W</th>
+              <th class="px-4 py-3 text-center">D</th>
+              <th class="px-4 py-3 text-center">L</th>
+              <th class="px-4 py-3 text-center">GF</th>
+              <th class="px-4 py-3 text-center">GA</th>
+              <th class="px-4 py-3 text-center">GD</th>
+              <th class="px-4 py-3 text-center text-yellow-300">Pts</th>
+            </tr>
+          </thead>
+
+          <tbody class="text-sm">
+            {% for row in g.standings %}
+            <tr class="border-t border-white/10 hover:bg-white/10 transition">
+              <td class="px-4 py-3 font-semibold">
+                <a href="{% url 'ppl3_team' row.team.id %}"
+                   class="text-blue-300 hover:text-yellow-300 transition">
+                  {{ row.team.name }}
+                </a>
+              </td>
+              <td class="px-4 py-3 text-center">{{ row.played }}</td>
+              <td class="px-4 py-3 text-center">{{ row.wins }}</td>
+              <td class="px-4 py-3 text-center">{{ row.draws }}</td>
+              <td class="px-4 py-3 text-center">{{ row.losses }}</td>
+              <td class="px-4 py-3 text-center">{{ row.goals_for }}</td>
+              <td class="px-4 py-3 text-center">{{ row.goals_against }}</td>
+              <td class="px-4 py-3 text-center">{{ row.goal_difference }}</td>
+              <td class="px-4 py-3 text-center font-bold text-yellow-300">{{ row.points }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="9" class="px-4 py-4 text-center text-blue-200/70">
+                No standings available yet.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+    {% empty %}
+    <p class="text-blue-200/70 text-center">No groups created yet.</p>
+    {% endfor %}
+
+  </div>
+</div>
+
+{% endblock %}

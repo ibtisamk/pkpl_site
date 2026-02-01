@@ -1,0 +1,138 @@
+{% extends "league/base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="min-h-screen bg-gradient-to-b from-[#0b2f2f] via-[#0f3d4c] to-[#0b2f2f] text-white px-4 py-10">
+
+  <div class="max-w-5xl mx-auto space-y-12">
+
+    <!-- HEADER -->
+    <div class="text-center space-y-2">
+      <h1 class="text-4xl font-extrabold tracking-wide text-yellow-300 drop-shadow-lg">
+        Match Details
+      </h1>
+
+      {% if match.fixture %}
+      <p class="text-blue-200/80 text-sm">
+        {{ match.fixture.season.name }} — {{ match.fixture.date|date:"M d, Y" }}
+      </p>
+      {% else %}
+      <p class="text-blue-200/80 text-sm">
+        {{ match.round.season.name }} — {{ match.round.round_type }}
+      </p>
+      {% endif %}
+    </div>
+
+    <!-- SCOREBOARD -->
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-xl text-center space-y-4">
+
+      <div class="text-2xl font-bold">
+
+        {% if match.fixture %}
+          <!-- GROUP MATCH -->
+          <span class="text-blue-200">{{ match.fixture.home_club.name }}</span>
+          <span class="text-yellow-300 mx-4">{{ match.home_goals }} - {{ match.away_goals }}</span>
+          <span class="text-blue-200">{{ match.fixture.away_club.name }}</span>
+
+        {% else %}
+          <!-- KNOCKOUT MATCH -->
+          <span class="text-blue-200">
+            {{ match.home_club.name|default:match.home_placeholder }}
+          </span>
+          <span class="text-yellow-300 mx-4">{{ match.home_goals }} - {{ match.away_goals }}</span>
+          <span class="text-blue-200">
+            {{ match.away_club.name|default:match.away_placeholder }}
+          </span>
+        {% endif %}
+
+      </div>
+
+      {% if match.fixture %}
+      <p class="text-blue-200/70 text-sm">
+        Played on {{ match.fixture.date|date:"F d, Y" }}
+      </p>
+      {% endif %}
+    </div>
+
+    <!-- LINEUPS (ONLY FOR GROUP MATCHES) -->
+    {% if match.fixture %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- HOME LINEUP -->
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-5 backdrop-blur-xl shadow-xl">
+        <h2 class="text-xl font-bold text-yellow-300 mb-3">
+          {{ match.fixture.home_club.name }} — Lineup
+        </h2>
+
+        <ul class="space-y-2">
+          {% for p in match.home_players.all %}
+          <li class="text-blue-200">{{ p.gamertag }}</li>
+          {% empty %}
+          <li class="text-blue-200/70">No lineup submitted.</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- AWAY LINEUP -->
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-5 backdrop-blur-xl shadow-xl">
+        <h2 class="text-xl font-bold text-yellow-300 mb-3">
+          {{ match.fixture.away_club.name }} — Lineup
+        </h2>
+
+        <ul class="space-y-2">
+          {% for p in match.away_players.all %}
+          <li class="text-blue-200">{{ p.gamertag }}</li>
+          {% empty %}
+          <li class="text-blue-200/70">No lineup submitted.</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+    </div>
+    {% endif %}
+
+    <!-- PLAYER STATS TABLE -->
+    <section>
+      <h2 class="text-2xl font-bold text-yellow-300 mb-4">Player Match Stats</h2>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse bg-white/5 border border-white/10 rounded-2xl backdrop-blur-xl shadow-xl">
+          <thead class="bg-white/10 text-blue-200 uppercase text-xs tracking-wider">
+            <tr>
+              <th class="px-4 py-3">Player</th>
+              <th class="px-4 py-3 text-center">Goals</th>
+              <th class="px-4 py-3 text-center">Assists</th>
+              <th class="px-4 py-3 text-center">Rating</th>
+              <th class="px-4 py-3 text-center">Minutes</th>
+            </tr>
+          </thead>
+
+          <tbody class="text-sm">
+            {% for s in stats %}
+            <tr class="border-t border-white/10 hover:bg-white/10 transition">
+              <td class="px-4 py-3 font-semibold text-blue-200">
+                <a href="{% url 'ppl3_player' s.player.id %}" class="hover:text-yellow-300 transition">
+                  {{ s.player.gamertag }}
+                </a>
+              </td>
+              <td class="px-4 py-3 text-center">{{ s.goals }}</td>
+              <td class="px-4 py-3 text-center">{{ s.assists }}</td>
+              <td class="px-4 py-3 text-center text-yellow-300 font-bold">{{ s.rating }}</td>
+              <td class="px-4 py-3 text-center">{{ s.minutes_played }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="px-4 py-4 text-center text-blue-200/70">
+                No player stats available.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+{% endblock %}

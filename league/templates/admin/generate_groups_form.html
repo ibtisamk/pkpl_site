@@ -1,0 +1,25 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<h1>Generate Groups</h1>
+
+<p>Select how many groups you want to generate for the selected season(s).</p>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <!-- CRITICAL: send the action name -->
+    <input type="hidden" name="action" value="{{ action }}">
+
+    <!-- CRITICAL: send selected season IDs -->
+    {% for season in seasons %}
+        <input type="hidden" name="_selected_action" value="{{ season.pk }}">
+    {% endfor %}
+
+    <!-- Django admin requires this -->
+    <input type="hidden" name="post" value="yes">
+
+    <button type="submit" class="default">Generate</button>
+</form>
+{% endblock %}
