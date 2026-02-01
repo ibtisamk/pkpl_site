@@ -22,7 +22,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-secret-key")
+
 DEBUG = os.getenv("DEBUG", "True") == "True"
+
+if DEBUG:
+    ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = ["https://railway.com/project/55a5ecea-9216-419a-84bf-3efe01a18568/service/0554cf42-fbf4-4469-81a1-f5bc0a782c29?environmentId=c3e47d5d-d9a6-48be-8b96-9f64420c28bc"]
+
 
 
 ALLOWED_HOSTS = ["*",
@@ -129,9 +136,21 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
+# --------------------------------------
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+
+# Where collectstatic will put all files for production
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# WhiteNoise for serving static files in production
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+
+# Media files (uploaded images like logos)
+# ----------------------------------------
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / "media"
+
 
