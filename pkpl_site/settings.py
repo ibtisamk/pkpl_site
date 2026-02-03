@@ -37,7 +37,23 @@ ALLOWED_HOSTS = ["*",
     "127.0.0.1",
     "localhost",
     "192.168.24.164",
+    "pkplsite-production.up.railway.app",
 ]
+
+# Add Railway production domain to CSRF trusted origins so deployed
+# site form POSTs are accepted.
+CSRF_TRUSTED_ORIGINS = [
+    "https://pkplsite-production.up.railway.app",
+]
+
+# When running behind Railway's proxy, honor the X-Forwarded-Proto header
+# so Django treats requests as secure (needed for correct CSRF origin checks).
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Ensure cookies used for CSRF and sessions are only sent over HTTPS in
+# production. These are safe defaults when serving over TLS.
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 
 # Application definition
 
