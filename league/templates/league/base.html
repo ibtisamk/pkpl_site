@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PKPL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     {% load static %}
@@ -23,7 +25,7 @@
           <span class="text-white font-bold text-xl tracking-wide">PPL</span>
         </a>
 
-        <!-- CENTER: NAV LINKS -->
+        <!-- CENTER: NAV LINKS (Desktop) -->
         <div class="hidden md:flex items-center gap-8 text-blue-100/90 font-medium">
             <a href="/teams/" class="hover:text-white transition">Teams</a>
             <a href="{% url 'all_players' %}" class="px-4 py-2 text-white hover:text-yellow-400">Players</a>
@@ -34,22 +36,93 @@
             <a href="/ppl1/" class="hover:text-white transition">PPL 1.0</a>
             <a href="/ppl2/" class="hover:text-white transition">PPL 2.0</a>
             <a href="/ppl3hype/" class="hover:text-white transition">PPL 3.0</a>
+        </div>
+
+        <!-- RIGHT: REGISTER BUTTON (Desktop) + HAMBURGER (Mobile) -->
+        <div class="flex items-center gap-4">
+          <!-- Register Button (Desktop) -->
+          <a 
+            href="/register/" 
+            class="hidden md:block bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded-xl shadow-md transition"
+          >
+            Register
+          </a>
+
+          <!-- Hamburger Menu Button (Mobile) -->
+          <button 
+            id="mobile-menu-btn" 
+            class="md:hidden flex flex-col items-center justify-center w-10 h-10 gap-1.5 hover:bg-white/10 rounded-lg transition"
+            aria-label="Toggle navigation menu"
+          >
+            <span class="w-6 h-0.5 bg-white transition-all" id="hamburger-line1"></span>
+            <span class="w-6 h-0.5 bg-white transition-all" id="hamburger-line2"></span>
+            <span class="w-6 h-0.5 bg-white transition-all" id="hamburger-line3"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- MOBILE NAV MENU (Hidden by default) -->
+      <div 
+        id="mobile-menu" 
+        class="hidden md:hidden border-t border-white/20 bg-white/5 backdrop-blur-md"
+      >
+        <div class="px-4 py-4 space-y-3 text-blue-100/90 font-medium">
+          <a href="/teams/" class="block px-2 py-2 hover:text-white hover:bg-white/10 rounded transition">Teams</a>
+          <a href="{% url 'all_players' %}" class="block px-2 py-2 text-white hover:text-yellow-400 hover:bg-white/10 rounded transition">Players</a>
+          <a href="/rankings/" class="block px-2 py-2 hover:text-white hover:bg-white/10 rounded transition">Rankings</a>
+          <a href="/fixtures/upcoming/" class="block px-2 py-2 hover:text-white hover:bg-white/10 rounded transition">Upcoming</a>
+          <a href="/fixtures/results/" class="block px-2 py-2 hover:text-white hover:bg-white/10 rounded transition">Results</a>
+          <a href="/story/" class="block px-2 py-2 hover:text-white hover:bg-white/10 rounded transition">Story</a>
+          <a href="/ppl1/" class="block px-2 py-2 hover:text-white hover:bg-white/10 rounded transition">PPL 1.0</a>
+          <a href="/ppl2/" class="block px-2 py-2 hover:text-white hover:bg-white/10 rounded transition">PPL 2.0</a>
+          <a href="/ppl3hype/" class="block px-2 py-2 hover:text-white hover:bg-white/10 rounded transition">PPL 3.0</a>
+          <div class="pt-2 border-t border-white/20">
+            <a 
+              href="/register/" 
+              class="block w-full text-center bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded-xl shadow-md transition"
+            >
+              Register
+            </a>
           </div>
-          
-
-        <!-- RIGHT: REGISTER BUTTON -->
-        <a 
-          href="/register/" 
-          class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded-xl shadow-md transition"
-        >
-          Register
-        </a>
-
+        </div>
       </div>
     </nav>
 
     <!-- SPACER (prevents content from hiding behind navbar) -->
     <div class="h-20"></div>
+
+    <!-- JavaScript for Mobile Menu Toggle -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const hamburgerLine1 = document.getElementById('hamburger-line1');
+        const hamburgerLine2 = document.getElementById('hamburger-line2');
+        const hamburgerLine3 = document.getElementById('hamburger-line3');
+
+        mobileMenuBtn.addEventListener('click', function() {
+          mobileMenu.classList.toggle('hidden');
+          
+          // Animate hamburger icon
+          hamburgerLine1.classList.toggle('rotate-45');
+          hamburgerLine1.classList.toggle('translate-y-2');
+          hamburgerLine2.classList.toggle('opacity-0');
+          hamburgerLine3.classList.toggle('-rotate-45');
+          hamburgerLine3.classList.toggle('-translate-y-2');
+        });
+
+        // Close menu when a link is clicked
+        const menuLinks = mobileMenu.querySelectorAll('a');
+        menuLinks.forEach(link => {
+          link.addEventListener('click', function() {
+            mobileMenu.classList.add('hidden');
+            hamburgerLine1.classList.remove('rotate-45', 'translate-y-2');
+            hamburgerLine2.classList.remove('opacity-0');
+            hamburgerLine3.classList.remove('-rotate-45', '-translate-y-2');
+          });
+        });
+      });
+    </script>
 
     <!-- PAGE CONTENT -->
     {% block content %}{% endblock %}
