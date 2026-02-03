@@ -20,103 +20,48 @@
     <!-- BRACKET -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
 
-      <!-- QUARTERFINALS -->
+      {% for rnd in rounds %}
       <div class="space-y-4">
-        <h2 class="text-xl font-bold text-blue-200">Quarterfinals</h2>
+        <h2 class="text-xl font-bold text-blue-200">{{ rnd.round.get_round_type_display }}</h2>
 
-        {% for r in rounds %}
-          {% if r.round_type == "Quarterfinal" %}
-            {% for f in r.fixtures.all %}
-            <a href="{% url 'ppl3_match_detail' f.match.id %}"
-               class="block bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl hover:bg-white/10 transition">
+        {% for m in rnd.matches %}
+        <div class="block bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl hover:bg-white/10 transition">
 
-              <p class="font-semibold">
-                {{ f.home_club.name }} vs {{ f.away_club.name }}
-              </p>
-
-              <p class="text-blue-200 text-sm mt-1">
-                {{ f.date|date:"M d, Y" }}
-              </p>
-
-              {% if f.match.is_played %}
-              <p class="text-yellow-300 font-bold mt-1">
-                {{ f.match.home_goals }} - {{ f.match.away_goals }}
-              </p>
-              {% endif %}
-            </a>
-            {% endfor %}
+          {% if m.detail_url %}
+          <a href="{{ m.detail_url }}" class="font-semibold text-lg block">{{ m.home }} vs {{ m.away }}</a>
+          {% else %}
+          <div class="font-semibold text-lg">{{ m.home }} vs {{ m.away }}</div>
           {% endif %}
-        {% endfor %}
-      </div>
 
-      <!-- SEMIFINALS -->
-      <div class="space-y-4">
-        <h2 class="text-xl font-bold text-blue-200">Semifinals</h2>
+          {% if m.played %}
+            <div class="text-yellow-300 font-bold mt-2 text-lg">{{ m.score }}</div>
 
-        {% for r in rounds %}
-          {% if r.round_type == "Semifinal" %}
-            {% for f in r.fixtures.all %}
-            <a href="{% url 'ppl3_match_detail' f.match.id %}"
-               class="block bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl hover:bg-white/10 transition">
-
-              <p class="font-semibold">
-                {{ f.home_club.name }} vs {{ f.away_club.name }}
-              </p>
-
-              <p class="text-blue-200 text-sm mt-1">
-                {{ f.date|date:"M d, Y" }}
-              </p>
-
-              {% if f.match.is_played %}
-              <p class="text-yellow-300 font-bold mt-1">
-                {{ f.match.home_goals }} - {{ f.match.away_goals }}
-              </p>
+            {% comment %} display winner if match object has goals or km had goals {% endcomment %}
+            {% if m.match and m.match.__class__.__name__ == 'Match' %}
+              {% if m.match.home_goals > m.match.away_goals %}
+                <div class="text-green-300 font-bold mt-1">Winner: {{ m.home }}</div>
+              {% elif m.match.away_goals > m.match.home_goals %}
+                <div class="text-green-300 font-bold mt-1">Winner: {{ m.away }}</div>
               {% endif %}
-            </a>
-            {% endfor %}
+            {% else %}
+              {% comment %} if fallback (km) has a score show winner based on score string split {% endcomment %}
+              {% if m.score %}
+                {% with parts=m.score.split '-' %}
+                  {% if parts.0|int > parts.1|int %}
+                    <div class="text-green-300 font-bold mt-1">Winner: {{ m.home }}</div>
+                  {% elif parts.1|int > parts.0|int %}
+                    <div class="text-green-300 font-bold mt-1">Winner: {{ m.away }}</div>
+                  {% endif %}
+                {% endwith %}
+              {% endif %}
+            {% endif %}
           {% endif %}
+
+        </div>
         {% endfor %}
+
       </div>
-
-      <!-- FINAL -->
-      <div class="space-y-4">
-        <h2 class="text-xl font-bold text-yellow-300">Final</h2>
-
-        {% for r in rounds %}
-          {% if r.round_type == "Final" %}
-            {% for f in r.fixtures.all %}
-            <a href="{% url 'ppl3_match_detail' f.match.id %}"
-               class="block bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl hover:bg-white/10 transition">
-
-              <p class="font-semibold text-yellow-300">
-                {{ f.home_club.name }} vs {{ f.away_club.name }}
-              </p>
-
-              <p class="text-blue-200 text-sm mt-1">
-                {{ f.date|date:"M d, Y" }}
-              </p>
-
-              {% if f.match.is_played %}
-              <p class="text-yellow-300 font-bold mt-1 text-lg">
-                {{ f.match.home_goals }} - {{ f.match.away_goals }}
-              </p>
-
-              <!-- WINNER -->
-              {% if f.match.home_goals > f.match.away_goals %}
-              <p class="text-green-300 font-bold mt-1">
-                Winner: {{ f.home_club.name }}
-              </p>
-              {% elif f.match.away_goals > f.match.home_goals %}
-              <p class="text-green-300 font-bold mt-1">
-                Winner: {{ f.away_club.name }}
-              </p>
-              {% endif %}
-              {% endif %}
-            </a>
-            {% endfor %}
-          {% endif %}
-        {% endfor %}
-      </div>
+      {% endfor %}
 
     </div>
 

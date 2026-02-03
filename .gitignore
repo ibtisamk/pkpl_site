@@ -1,10 +1,24 @@
-venv/
+# Python
 __pycache__/
-*.pyc
-db.sqlite3
-*.log
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+
+# Virtualenv
+venv/
+venv*/
+env/
 .env
-*.env
-staticfiles/
-media/
-import_data.xlsx
+.venv/
+
+# Django
+db.sqlite3
+/media
+/staticfiles
+
+# IDE
+.vscode/
+.idea/
+*.swp

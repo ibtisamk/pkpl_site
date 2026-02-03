@@ -12,109 +12,52 @@
         PPL 3.0 — Knockout Bracket
       </h1>
       <p class="text-blue-200/80 text-sm">
-        Quarterfinals, Semifinals, and Final
+        Tournament bracket — click any match for details
       </p>
     </div>
 
-    <!-- BRACKET GRID -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+    <!-- BRACKET: horizontal columns for rounds -->
+    <div class="overflow-x-auto">
+      <div class="flex items-start gap-6">
+        {% for rnd in rounds %}
+          {% if rnd.matches|length > 0 %}
+            <div class="relative min-w-[240px]">
+              <h2 class="text-lg font-bold mb-3 text-blue-200">{{ rnd.round.get_round_type_display }}</h2>
 
-      <!-- QUARTERFINALS -->
-      <div class="space-y-4">
-        <h2 class="text-xl font-bold text-blue-200">Quarterfinals</h2>
-
-        {% for r in rounds %}
-          {% if r.round.round_type == "QF" or r.round.round_type == "Quarterfinal" %}
-            {% for m in r.matches %}
-            <div class="block bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl hover:bg-white/10 transition">
-
-              <p class="font-semibold">
-                {{ m.home }} vs {{ m.away }}
-              </p>
-
-              {% if m.played %}
-              <p class="text-yellow-300 font-bold mt-1">
-                {{ m.score }}
-              </p>
-              {% endif %}
-
-            </div>
-            {% endfor %}
-          {% endif %}
-        {% endfor %}
-      </div>
-
-      <!-- SEMIFINALS -->
-      <div class="space-y-4">
-        <h2 class="text-xl font-bold text-blue-200">Semifinals</h2>
-
-        {% for r in rounds %}
-          {% if r.round.round_type == "SF" or r.round.round_type == "Semifinal" %}
-            {% for m in r.matches %}
-            <div class="block bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl hover:bg-white/10 transition">
-
-              <p class="font-semibold">
-                {{ m.home }} vs {{ m.away }}
-              </p>
-
-              {% if m.played %}
-              <p class="text-yellow-300 font-bold mt-1">
-                {{ m.score }}
-              </p>
-              {% endif %}
-
-            </div>
-            {% endfor %}
-          {% endif %}
-        {% endfor %}
-      </div>
-
-      <!-- FINAL -->
-      <div class="space-y-4">
-        <h2 class="text-xl font-bold text-yellow-300">Final</h2>
-
-        {% for r in rounds %}
-          {% if r.round.round_type == "F" or r.round.round_type == "Final" %}
-            {% for m in r.matches %}
-            <div class="block bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl hover:bg-white/10 transition">
-
-              <p class="font-semibold text-yellow-300">
-                {{ m.home }} vs {{ m.away }}
-              </p>
-
-              {% if m.played %}
-              <p class="text-yellow-300 font-bold mt-1 text-lg">
-                {{ m.score }}
-              </p>
-
-              <!-- WINNER -->
-              {% if m.score %}
-                {% with hs=m.score|slice:":1" as hs %}
-                {% with as=m.score|slice:"2:" as as %}
-                  {% if hs|add:"0" > as|add:"0" %}
-                  <p class="text-green-300 font-bold mt-1">
-                    Winner: {{ m.home }}
-                  </p>
-                  {% elif as|add:"0" > hs|add:"0" %}
-                  <p class="text-green-300 font-bold mt-1">
-                    Winner: {{ m.away }}
-                  </p>
+              <div class="space-y-4">
+                {% for m in rnd.matches %}
+                <div class="bg-white/5 border border-white/10 rounded-xl p-3 backdrop-blur-xl hover:bg-white/10 transition">
+                  {% if m.detail_url %}
+                    <a href="{{ m.detail_url }}" class="block font-semibold text-lg">{{ m.home }} vs {{ m.away }}</a>
+                  {% elif m.match %}
+                    <a href="{% url 'ppl3_match_detail' m.match.id %}" class="block font-semibold text-lg">{{ m.home }} vs {{ m.away }}</a>
+                  {% else %}
+                    <div class="font-semibold text-lg">{{ m.home }} vs {{ m.away }}</div>
                   {% endif %}
-                {% endwith %}
-                {% endwith %}
-              {% endif %}
 
-              {% endif %}
-
+                  {% if m.played %}
+                  <div class="text-yellow-300 font-bold mt-2 text-lg">{{ m.score }}</div>
+                  {% endif %}
+                </div>
+                {% endfor %}
+              </div>
             </div>
-            {% endfor %}
+
+            {% if not forloop.last %}
+              <div class="flex items-center">
+                <!-- simple vertical connector between columns -->
+                <svg width="32" height="220" viewBox="0 0 32 220" xmlns="http://www.w3.org/2000/svg" class="mx-2">
+                  <line x1="16" y1="10" x2="16" y2="210" stroke="rgba(255,255,255,0.12)" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </div>
+            {% endif %}
           {% endif %}
         {% endfor %}
       </div>
-
     </div>
 
   </div>
 </div>
 
 {% endblock %}
+              <p class="font-semibold">

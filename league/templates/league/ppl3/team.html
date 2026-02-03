@@ -68,8 +68,8 @@
         {% for f in fixtures %}
 
         <!-- GROUP FIXTURE (Fixture model) -->
-        {% if f.match %}
-        <a href="{% url 'ppl3_match_detail' f.match.id %}"
+        {% if f.group_match %}
+        <a href="{% url 'ppl3_match_detail' f.group_match.id %}"
            class="block bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl hover:bg-white/10 transition">
 
           <div class="flex justify-between items-center">
@@ -81,9 +81,9 @@
             </span>
           </div>
 
-          {% if f.match.is_played %}
+          {% if f.group_match.is_played %}
           <p class="text-yellow-300 font-bold mt-1">
-            Final Score: {{ f.match.home_goals }} - {{ f.match.away_goals }}
+            Final Score: {{ f.group_match.home_goals }} - {{ f.group_match.away_goals }}
           </p>
           {% endif %}
         </a>

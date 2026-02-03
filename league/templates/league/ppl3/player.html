@@ -45,9 +45,9 @@
 
         <div class="bg-white/5 border border-white/10 rounded-xl p-4 text-center backdrop-blur-xl shadow-xl">
           <p class="text-blue-200 text-xs uppercase">AMR</p>
-          <p class="text-yellow-300 text-xl font-bold">
-            {% if stats.avg_rating %}
-              {{ stats.avg_rating }}
+            <p class="text-yellow-300 text-xl font-bold">
+            {% if stats and stats.rating %}
+              {{ stats.rating|floatformat:2 }}
             {% else %}
               --
             {% endif %}
@@ -82,19 +82,26 @@
             <tr class="border-t border-white/10 hover:bg-white/10 transition">
 
               <td class="px-4 py-3 font-semibold text-blue-200">
-                <a href="{% url 'ppl3_match_detail' s.match.id %}" class="hover:text-yellow-300 transition">
-
-                  {% if s.match.fixture %}
-                    <!-- GROUP MATCH -->
-                    {{ s.match.fixture.home_club.name }} vs {{ s.match.fixture.away_club.name }}
-                  {% else %}
-                    <!-- KNOCKOUT MATCH -->
-                    {{ s.match.home_club.name|default:s.match.home_placeholder }}
-                    vs
-                    {{ s.match.away_club.name|default:s.match.away_placeholder }}
-                  {% endif %}
-
+                {% if s.group_match %}
+                <a href="{% url 'ppl3_match_detail' s.group_match.id %}" class="hover:text-yellow-300 transition">
+                  <!-- GROUP MATCH -->
+                  {{ s.group_match.fixture.home_club.name }} vs {{ s.group_match.fixture.away_club.name }}
                 </a>
+                {% elif s.knockout_match %}
+                <a href="{% url 'ppl3_match_detail' s.knockout_match.id %}" class="hover:text-yellow-300 transition">
+                  <!-- KNOCKOUT MATCH -->
+                  {{ s.knockout_match.home_club.name|default:s.knockout_match.home_placeholder }}
+                  vs
+                  {{ s.knockout_match.away_club.name|default:s.knockout_match.away_placeholder }}
+                </a>
+                {% elif s.fixture %}
+                <a href="{% url 'ppl3_match_detail' s.fixture.id %}" class="hover:text-yellow-300 transition">
+                  <!-- Direct Fixture -->
+                  {{ s.fixture.home_club.name }} vs {{ s.fixture.away_club.name }}
+                </a>
+                {% else %}
+                <span class="text-blue-200">(match)</span>
+                {% endif %}
               </td>
 
               <td class="px-4 py-3 text-center">{{ s.goals }}</td>

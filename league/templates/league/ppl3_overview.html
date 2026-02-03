@@ -22,11 +22,11 @@
       <h2 class="text-2xl font-bold mb-4 text-yellow-300">Groups</h2>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {% for group in groups %}
+        {% for g in groups %}
         <a href="{% url 'ppl3_groups' %}"
            class="block bg-white/5 border border-white/10 rounded-2xl p-5 backdrop-blur-xl shadow-xl hover:bg-white/10 transition">
-          <h3 class="text-xl font-semibold text-blue-200">{{ group.name }}</h3>
-          <p class="text-sm text-blue-100/70 mt-2">{{ group.members.count }} clubs</p>
+          <h3 class="text-xl font-semibold text-blue-200">{{ g.group.name }}</h3>
+          <p class="text-sm text-blue-100/70 mt-2">{{ g.standings.count }} clubs</p>
         </a>
         {% empty %}
         <p class="text-blue-200/70">Groups not created yet.</p>
@@ -40,8 +40,12 @@
 
       <div class="space-y-3">
         {% for f in fixtures %}
-        <a href="{% url 'ppl3_match_detail' f.match.id %}"
+        {% if f.group_match %}
+        <a href="{% url 'ppl3_match_detail' f.group_match.id %}"
            class="block bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl hover:bg-white/10 transition">
+        {% else %}
+        <a class="block bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl hover:bg-white/10 transition opacity-50 cursor-not-allowed">
+        {% endif %}
           <div class="flex justify-between items-center">
             <span class="font-semibold">
               {{ f.home_club.name }} vs {{ f.away_club.name }}
@@ -62,10 +66,18 @@
       <h2 class="text-2xl font-bold mb-4 text-yellow-300">Knockout Rounds</h2>
 
       <div class="space-y-3">
-        {% for r in knockout_rounds %}
+        {% for r in knockouts %}
         <a href="{% url 'ppl3_knockouts' %}"
            class="block bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl hover:bg-white/10 transition">
-          <span class="font-semibold">{{ r.round_type }}</span>
+          <span class="font-semibold">{{ r.round.get_round_type_display }}</span>
+
+          <div class="text-sm text-blue-200 mt-2">
+            {% for m in r.matches %}
+            <div class="mt-1">
+              {{ m.home }} vs {{ m.away }} {% if m.played %} — <span class="text-yellow-300 font-bold">{{ m.score }}</span> {% endif %}
+            </div>
+            {% endfor %}
+          </div>
         </a>
         {% empty %}
         <p class="text-blue-200/70">Knockout bracket not generated yet.</p>

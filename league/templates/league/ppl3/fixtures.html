@@ -32,8 +32,12 @@
             </h3>
 
             {% for f in week.list %}
-            <a href="{% url 'ppl3_match_detail' f.match.id %}"
+            {% if f.group_match %}
+            <a href="{% url 'ppl3_match_detail' f.group_match.id %}"
                class="block bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl hover:bg-white/10 transition">
+            {% else %}
+            <a class="block bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl hover:bg-white/10 transition opacity-50 cursor-not-allowed">
+            {% endif %}
 
               <div class="flex justify-between items-center">
                 <span class="font-semibold">
@@ -44,9 +48,9 @@
                 </span>
               </div>
 
-              {% if f.match.is_played %}
+              {% if f.group_match.is_played %}
               <p class="text-yellow-300 font-bold mt-1">
-                Final Score: {{ f.match.home_goals }} - {{ f.match.away_goals }}
+                Final Score: {{ f.group_match.home_goals }} - {{ f.group_match.away_goals }}
               </p>
               {% endif %}
 
