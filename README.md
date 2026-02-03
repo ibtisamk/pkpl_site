@@ -1,3 +1,20 @@
+# PKPL Site
+
+This is the Django project for the PKPL site.
+
+Quick deploy notes (Railway):
+
+- Ensure `SECRET_KEY` and other secrets are set in Railway environment variables.
+- Set `DEBUG=False` in env and configure `ALLOWED_HOSTS` appropriately.
+- Railway: add PostgreSQL plugin and set `DATABASE_URL`.
+- Ensure `gunicorn` is in `requirements.txt` (it is already included).
+- Create a `Procfile` with: `web: gunicorn pkpl_site.wsgi --log-file -`.
+- Run migration and collectstatic after deploy:
+
+```bash
+railway run python manage.py migrate
+railway run python manage.py collectstatic --noinput
+```
 # Pakistani Pro Clubs League — PPL Site (Django)
 
 A full-featured league management platform built for the **Pakistani Pro Clubs League (FC 26 onwards)**.  

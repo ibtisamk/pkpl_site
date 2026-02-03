@@ -1,3 +1,24 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Virtualenv
+venv/
+env/
+.env
+.venv/
+
+# Django
+db.sqlite3
+/media
+/staticfiles
+
+# IDE
+.vscode/
+.idea/
+*.swp
 # Python
 __pycache__/
 *.py[cod]
