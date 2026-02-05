@@ -8,11 +8,19 @@
   <!-- TEAM HEADER -->
 
 <div class="text-center mb-10">
-  <img 
-    src="{% static 'league/pplLogos/' %}{{ club.short_name }}logo.JPG"
-    alt="{{ club.name }} logo"
-    class="h-24 mx-auto mb-4 object-contain drop-shadow-lg"
-  >
+  {% if club.logo %}
+    <img 
+      src="{{ club.logo.url }}"
+      alt="{{ club.name }} logo"
+      class="h-24 mx-auto mb-4 object-contain drop-shadow-lg"
+    >
+  {% else %}
+    <img 
+      src="{% static 'league/pplLogos/' %}{{ club.short_name }}logo.JPG"
+      alt="{{ club.name }} logo"
+      class="h-24 mx-auto mb-4 object-contain drop-shadow-lg"
+    >
+  {% endif %}
 
   <h1 class="text-4xl font-bold text-gray-100">{{ club.name }}</h1>
   <p class="text-gray-300 text-lg">{{ club.short_name }}</p>
