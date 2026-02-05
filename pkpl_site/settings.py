@@ -178,8 +178,8 @@ cloudinary.config(
     secure=True
 )
 
-# Use legacy setting for django-cloudinary-storage compatibility
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# Use custom Cloudinary storage backend
+DEFAULT_FILE_STORAGE = 'league.storage.CloudinaryStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / "media"
