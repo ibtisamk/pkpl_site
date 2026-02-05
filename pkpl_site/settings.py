@@ -177,6 +177,13 @@ CLOUDINARY_STORAGE = {
 }
 
 if CLOUDINARY_STORAGE['CLOUD_NAME']:
+    # Configure Cloudinary
+    cloudinary.config(
+        cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
+        api_key=CLOUDINARY_STORAGE['API_KEY'],
+        api_secret=CLOUDINARY_STORAGE['API_SECRET'],
+        secure=True
+    )
     # Use Cloudinary in production
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
     MEDIA_URL = '/media/'  # This will be overridden by Cloudinary URLs
