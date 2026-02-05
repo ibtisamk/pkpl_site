@@ -58,11 +58,13 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
-
-    # Third‑party apps
+    
+    # Third‑party apps (cloudinary_storage MUST be before staticfiles)
     'cloudinary_storage',
     'cloudinary',
+    
+    'django.contrib.staticfiles',
+
     'crispy_forms',
     'crispy_tailwind',
 
