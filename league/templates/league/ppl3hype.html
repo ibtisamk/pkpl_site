@@ -87,7 +87,7 @@
         <div>
           <h2 class="text-2xl md:text-3xl font-bold">Confirmed Clubs for PPL 3.0</h2>
           <p class="text-blue-100/80 text-sm mt-1">
-            14 teams. The FIFA Community, bright lights, and full commitment.
+            {{ clubs.count }} team{{ clubs.count|pluralize }}. The FIFA Community, bright lights, and full commitment.
           </p>
         </div>
         <p class="text-xs uppercase tracking-[0.25em] text-blue-300/80">
@@ -97,138 +97,24 @@
 
       <!-- GLASS GRID -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-6">
-
-        <!-- Altar Londay (ID 16) -->
-        <a href="{% url 'team_detail' 16 %}">
-          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
-            <div class="w-24 h-24 flex items-center justify-center rounded-xl bg-white/5 border border-white/20">
-              <span class="text-xs text-blue-100/80 uppercase tracking-wide">No Logo Yet</span>
-            </div>
-            <p class="mt-3 text-sm font-semibold tracking-wide">Altar Londay</p>
+        {% for club in clubs %}
+        <a href="{% url 'team_detail' club.id %}">
+          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center hover:bg-white/15 transition">
+            {% if club.logo %}
+              <img src="{{ club.logo.url }}" alt="{{ club.name }} Logo" class="w-24 h-24 object-contain" />
+            {% else %}
+              <div class="w-24 h-24 flex items-center justify-center rounded-xl bg-white/5 border border-white/20">
+                <span class="text-xs text-blue-100/80 uppercase tracking-wide">No Logo Yet</span>
+              </div>
+            {% endif %}
+            <p class="mt-3 text-sm font-semibold tracking-wide">{{ club.name }}</p>
           </div>
         </a>
-      
-        <!-- KKG (ID 15) -->
-        <a href="{% url 'team_detail' 15 %}">
-          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
-            <img src="{% static 'league/pplLogos/KKGlogo.jpg' %}" class="w-24 h-24 object-contain" />
-            <p class="mt-3 text-sm font-semibold tracking-wide">KKG</p>
-          </div>
-        </a>
-      
-        <!-- Thicc FC (ID 14) -->
-        <a href="{% url 'team_detail' 14 %}">
-          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
-            <img src="{% static 'league/pplLogos/TFClogo.JPG' %}" class="w-24 h-24 object-contain" />
-            <p class="mt-3 text-sm font-semibold tracking-wide">Thicc FC</p>
-          </div>
-        </a>
-      
-        <!-- Sachay Musalman (ID 13) -->
-        <a href="{% url 'team_detail' 13 %}">
-          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
-            <img src="{% static 'league/pplLogos/SMlogo.JPG' %}" class="w-24 h-24 object-contain" />
-            <p class="mt-3 text-sm font-semibold tracking-wide">Sachay Musalman</p>
-          </div>
-        </a>
-      
-        <!-- Pulao FC (ID 12) -->
-        <a href="{% url 'team_detail' 12 %}">
-          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
-            <img src="{% static 'league/pplLogos/PFClogo.JPG' %}" class="w-24 h-24 object-contain" />
-            <p class="mt-3 text-sm font-semibold tracking-wide">Pulao FC</p>
-          </div>
-        </a>
-      
-        <!-- Glovify FC (ID 11) -->
-        <a href="{% url 'team_detail' 11 %}">
-          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
-            <span class="text-xs text-blue-100/80 uppercase tracking-wide">No Logo Yet</span>
-            </div>
-        </a>
-      
-        <!-- GreatGrapes (ID 10) -->
-        <a href="{% url 'team_detail' 10 %}">
-          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
-            <img src="{% static 'league/pplLogos/GGPlogo.JPG' %}" class="w-24 h-24 object-contain" />
-            <p class="mt-3 text-sm font-semibold tracking-wide">GreatGrapes</p>
-          </div>
-        </a>
-      
-        <!-- Gujjar FC (ID 9) -->
-        <a href="{% url 'team_detail' 9 %}">
-          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
-            <img src="{% static 'league/pplLogos/GFClogo.JPG' %}" class="w-24 h-24 object-contain" />
-            <p class="mt-3 text-sm font-semibold tracking-wide">Gujjar FC</p>
-          </div>
-        </a>
-      
-        <!-- AOA FC (ID 8) -->
-        <a href="{% url 'team_detail' 8 %}">
-          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
-            <img src="{% static 'league/pplLogos/AOAlogo.JPG' %}" class="w-24 h-24 object-contain" />
-            <p class="mt-3 text-sm font-semibold tracking-wide">AOA FC</p>
-          </div>
-        </a>
-      
-        <!-- Jawan FC (ID 7) -->
-        <a href="{% url 'team_detail' 7 %}">
-          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
-            <img src="{% static 'league/pplLogos/JFClogo.JPG' %}" class="w-24 h-24 object-contain" />
-            <p class="mt-3 text-sm font-semibold tracking-wide">Jawan FC</p>
-          </div>
-        </a>
-      
-        <!-- Pakistan FC (ID 6) -->
-        <a href="{% url 'team_detail' 6 %}">
-          <div class="bg-white/10 backdrop-blur-md border border-dashed border-blue-300/40 rounded-2xl p-4 shadow-lg flex flex-col items-center">
-            <div class="w-24 h-24 flex items-center justify-center rounded-xl bg-white/5 border border-white/20">
-              <span class="text-xs text-blue-100/80 uppercase tracking-wide">No Logo Yet</span>
-            </div>
-            <p class="mt-3 text-sm font-semibold tracking-wide">Pakistan FC</p>
-          </div>
-        </a>
-      
-        <!-- Rat Futbol (ID 5) -->
-        <a href="{% url 'team_detail' 5 %}">
-          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
-            <img src="{% static 'league/pplLogos/RATlogo.JPG' %}" class="w-24 h-24 object-contain" />
-            <p class="mt-3 text-sm font-semibold tracking-wide">Rat Futbol</p>
-          </div>
-        </a>
-      
-        <!-- Tikka Boti FC (ID 4) -->
-        <a href="{% url 'team_detail' 4 %}">
-          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
-            <img src="{% static 'league/pplLogos/TKBlogo.JPG' %}" class="w-24 h-24 object-contain" />
-            <p class="mt-3 text-sm font-semibold tracking-wide">Tikka Boti FC</p>
-          </div>
-        </a>
-      
-        <!-- Southall UTD (ID 3) -->
-        <a href="{% url 'team_detail' 3 %}">
-          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
-            <img src="{% static 'league/pplLogos/SHUlogo.JPG' %}" class="w-24 h-24 object-contain" />
-            <p class="mt-3 text-sm font-semibold tracking-wide">Southall UTD</p>
-          </div>
-        </a>
-      
-        <!-- Pakistani Lions (ID 2) -->
-        <a href="{% url 'team_detail' 2 %}">
-          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
-            <img src="{% static 'league/pplLogos/PKLlogo.JPG' %}" class="w-24 h-24 object-contain" />
-            <p class="mt-3 text-sm font-semibold tracking-wide">Pakistani Lions</p>
-          </div>
-        </a>
-      
-        <!-- Hamari FC (ID 1) -->
-        <a href="{% url 'team_detail' 1 %}">
-          <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center">
-            <img src="{% static 'league/pplLogos/HFClogo.JPG' %}" class="w-24 h-24 object-contain" />
-            <p class="mt-3 text-sm font-semibold tracking-wide">Hamari FC</p>
-          </div>
-        </a>
-      
+        {% empty %}
+        <div class="col-span-full text-center py-10">
+          <p class="text-blue-100/60">No clubs registered yet. Check back soon!</p>
+        </div>
+        {% endfor %}
       </div>
       
 

@@ -141,6 +141,7 @@ class Club(models.Model):
     founded = models.IntegerField(null=True, blank=True)
     stadium = models.CharField(max_length=100, null=True, blank=True)
     short_name = models.CharField(max_length=20, blank=True, null=True)
+    logo = models.ImageField(upload_to='league/pplLogos/', null=True, blank=True)
 
     seed_rank = models.PositiveIntegerField(
         null=True,
