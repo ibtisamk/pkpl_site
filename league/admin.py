@@ -34,6 +34,7 @@ from .models import (
     TeamRegistration,
     TeamRegistrationPlayer,
     PlayerRegistration,
+    REGIONS,
 )
 
 
@@ -81,11 +82,95 @@ class TeamRegistrationPlayerInline(admin.TabularInline):
     extra = 0
 
 
+# -----------------------------
+# Team Registration Approval Action
+# -----------------------------
+@admin.action(description="Approve selected registrations and create Clubs/Players")
+def approve_registration(modeladmin, request, queryset):
+    """
+    Approve team registrations by creating Club and Player objects.
+    Skips registrations that are already approved to prevent duplicates.
+    """
+    approved_count = 0
+    skipped_count = 0
+    error_count = 0
+
+    for registration in queryset:
+        # Skip if already approved
+        if registration.approved:
+            skipped_count += 1
+            continue
+
+        try:
+            with transaction.atomic():
+                # Create the Club
+                club, club_created = Club.objects.get_or_create(
+                    name=registration.team_name,
+                    defaults={
+                        'founded': int(registration.founded) if registration.founded and registration.founded.isdigit() else None,
+                        'stadium': registration.stadium,
+                        'short_name': registration.team_name[:20] if registration.team_name else None,
+                    }
+                )
+
+                # If club already existed, update fields anyway
+                if not club_created:
+                    if registration.founded and registration.founded.isdigit():
+                        club.founded = int(registration.founded)
+                    if registration.stadium:
+                        club.stadium = registration.stadium
+                    club.save()
+
+                # Create the captain as a Player
+                captain_player = Player.objects.create(
+                    gamertag=registration.captain_name,
+                    platform=registration.platform or 'PS5',
+                    club=club,
+                    position=registration.captain_position,
+                    location=dict(REGIONS).get(registration.region, '') if registration.region else None,
+                )
+
+                # Create Player objects for all registered players
+                players_created = 0
+                for player_registration in registration.players.all():
+                    Player.objects.create(
+                        gamertag=player_registration.name,
+                        platform=registration.platform or 'PS5',
+                        club=club,
+                        position=player_registration.position,
+                        location=dict(REGIONS).get(registration.region, '') if registration.region else None,
+                    )
+                    players_created += 1
+
+                # Mark registration as approved
+                registration.approved = True
+                registration.save()
+
+                approved_count += 1
+
+        except Exception as e:
+            error_count += 1
+            messages.error(request, f"Error approving {registration.team_name}: {str(e)}")
+            continue
+
+    # Display success message
+    if approved_count > 0:
+        messages.success(
+            request,
+            f"Successfully approved {approved_count} registration(s) and created clubs/players."
+        )
+    if skipped_count > 0:
+        messages.info(request, f"Skipped {skipped_count} already approved registration(s).")
+    if error_count > 0:
+        messages.warning(request, f"Failed to approve {error_count} registration(s).")
+
+
 @admin.register(TeamRegistration)
 class TeamRegistrationAdmin(admin.ModelAdmin):
     list_display = ("team_name", "captain_name", "approved", "timestamp")
     list_filter = ("approved",)
     inlines = [TeamRegistrationPlayerInline]
+    actions = [approve_registration]
 
 
 @admin.register(PlayerRegistration)
