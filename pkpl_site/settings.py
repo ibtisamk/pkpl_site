@@ -108,8 +108,12 @@ WSGI_APPLICATION = 'pkpl_site.wsgi.application'
 # Database
 # Use DATABASE_URL from the environment (Railway/Postgres) via dj-database-url
 # The config helper will read DATABASE_URL and return a Django DATABASES dict.
+# Falls back to SQLite for local development if DATABASE_URL is not set.
 DATABASES = {
-    "default": dj_database_url.config(conn_max_age=600, ssl_require=True)
+    "default": dj_database_url.config(
+        conn_max_age=600,
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+    )
 }
 
 
