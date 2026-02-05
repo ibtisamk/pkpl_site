@@ -14,6 +14,9 @@ from dotenv import load_dotenv
 load_dotenv()
 from pathlib import Path
 import dj_database_url
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -168,11 +171,6 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 # ----------------------------------------
 
 # Cloudinary configuration for persistent storage
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
-
-# Always use Cloudinary in production (Railway has the env vars)
 cloudinary.config(
     cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME', ''),
     api_key=os.getenv('CLOUDINARY_API_KEY', ''),
