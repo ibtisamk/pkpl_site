@@ -163,6 +163,9 @@ STATIC_URL = '/static/'
 # Where collectstatic will put all files for production
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# WhiteNoise for serving static files in production
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 
 # Media files (uploaded images like logos)
 # ----------------------------------------
@@ -175,15 +178,8 @@ cloudinary.config(
     secure=True
 )
 
-# Django 4.2+ uses STORAGES instead of DEFAULT_FILE_STORAGE and STATICFILES_STORAGE
-STORAGES = {
-    "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
+# Use legacy setting for django-cloudinary-storage compatibility
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / "media"
