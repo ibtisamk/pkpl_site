@@ -142,10 +142,8 @@ class Club(models.Model):
     stadium = models.CharField(max_length=100, null=True, blank=True)
     short_name = models.CharField(max_length=20, blank=True, null=True)
     
-    from .storage import CloudinaryStorage
     logo = models.ImageField(
         upload_to='league/pplLogos/', 
-        storage=CloudinaryStorage(), 
         null=True, 
         blank=True
     )
@@ -187,7 +185,7 @@ class Player(models.Model):
 # -------------------------
 class Group(models.Model):
     season = models.ForeignKey(Season, on_delete=models.CASCADE, related_name='groups')
-    name = models.CharField(max_length=5)
+    name = models.CharField(max_length=20)
 
     def __str__(self):
         return f"{self.season.name} - {self.name}"
