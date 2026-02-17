@@ -262,12 +262,6 @@ class GroupMatch(models.Model):
             return self.fixture.away_club
         return None
 
-    def save(self, *args, **kwargs):
-        if self.home_goals is not None and self.away_goals is not None:
-            self.is_played = True
-
-        super().save(*args, **kwargs)
-
         season = self.fixture.season
         home_club = self.fixture.home_club
         away_club = self.fixture.away_club
