@@ -1,6 +1,6 @@
 from django.db.models.signals import post_save, post_delete, pre_delete
 from django.dispatch import receiver
-from .models import KnockoutMatch, Season
+from .models import KnockoutMatch, Season, GroupMembership
 from .services import resolve_knockout_placeholders
 from .models import (
     GroupMatch,
@@ -10,6 +10,28 @@ from .models import (
     KnockoutMatch,
 )
 from .services import resolve_knockout_placeholders
+
+
+# ---------------------------------------------------------
+# AUTO-CREATE TEAM SEASON STATS WHEN CLUB ADDED TO GROUP
+# ---------------------------------------------------------
+@receiver(post_save, sender=GroupMembership)
+def create_team_season_stats_for_group_member(sender, instance, created, **kwargs):
+    if created:
+        TeamSeasonStats.objects.get_or_create(
+            team=instance.club,
+            season=instance.group.season,
+            defaults={
+                'played': 0,
+                'wins': 0,
+                'draws': 0,
+                'losses': 0,
+                'goals_for': 0,
+                'goals_against': 0,
+                'goal_difference': 0,
+                'points': 0,
+            }
+        )
 
 
 # ---------------------------------------------------------

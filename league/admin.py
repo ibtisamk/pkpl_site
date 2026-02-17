@@ -653,7 +653,7 @@ class SeasonAwardsAdmin(admin.ModelAdmin):
 
 
 @admin.register(Group)
-class GroupAdmin(admin.ModelAdmin):
+class GroupWithMembersAdmin(admin.ModelAdmin):
     list_display = ('season', 'name')
     list_filter = ('season',)
     search_fields = ('name',)
@@ -663,6 +663,29 @@ class GroupAdmin(admin.ModelAdmin):
         action_generate_group_fixtures_3x,
         action_generate_group_fixtures_4x,
     ]
+
+
+class GroupMembershipInline(admin.TabularInline):
+    model = GroupMembership
+    extra = 1
+    autocomplete_fields = ['club']
+
+
+class GroupWithMembersAdmin(admin.ModelAdmin):
+    list_display = ('season', 'name', 'get_member_count')
+    list_filter = ('season',)
+    search_fields = ('name',)
+    inlines = [GroupMembershipInline]
+    actions = [
+        action_generate_group_fixtures_1x,
+        action_generate_group_fixtures_2x,
+        action_generate_group_fixtures_3x,
+        action_generate_group_fixtures_4x,
+    ]
+    
+    def get_member_count(self, obj):
+        return obj.members.count()
+    get_member_count.short_description = 'Teams'
 
 
 admin.site.register(Club)
