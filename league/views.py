@@ -298,7 +298,7 @@ def all_players(request):
 
         player_data.append({
             "player": player,
-            "club": player.club.name,
+            "club": player.club.name if player.club else "Free Agent",
             "apps": total_apps,
             "goals": total_goals,
             "assists": total_assists,
