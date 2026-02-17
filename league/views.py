@@ -347,8 +347,7 @@ def ppl3_overview(request):
         Fixture.objects
         .filter(season=season)
         .filter(Q(group_match__is_played=False) | Q(group_match__isnull=True))
-        .filter(date__gte=timezone.now())
-        .order_by("date")
+        .order_by("date")[:10]  # Show next 10 fixtures
     )
 
     # All results: include played group fixtures and played knockout matches
@@ -458,7 +457,9 @@ def ppl3_overview(request):
 
 
 def upcoming_fixtures(request):
-    fixtures = Fixture.objects.filter(group_match__is_played=False).order_by("date")
+    fixtures = Fixture.objects.filter(
+        Q(group_match__is_played=False) | Q(group_match__isnull=True)
+    ).order_by("date")
     return render(request, "fixtures/upcoming.html", {"fixtures": fixtures})
 
 
