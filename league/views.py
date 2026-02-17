@@ -286,15 +286,15 @@ def all_players(request):
             try:
                 if hasattr(season, "awards"):
                     award = season.awards
-                    if award.mvp_id and award.mvp_id == player.id:
+                    if award.mvp_id == player.id:
                         awards.append(f"MVP ({season.name})")
-                    if award.top_scorer_id and award.top_scorer_id == player.id:
+                    if award.top_scorer_id == player.id:
                         awards.append(f"Top Scorer ({season.name})")
-                    if award.top_assister_id and award.top_assister_id == player.id:
+                    if award.top_assister_id == player.id:
                         awards.append(f"Top Assister ({season.name})")
-                    if award.best_defender_id and award.best_defender_id == player.id:
+                    if award.best_defender_id == player.id:
                         awards.append(f"Best Defender ({season.name})")
-                    if award.best_midfielder_id and award.best_midfielder_id == player.id:
+                    if award.best_midfielder_id == player.id:
                         awards.append(f"Best Midfielder ({season.name})")
             except Exception:
                 pass
