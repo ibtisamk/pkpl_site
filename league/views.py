@@ -264,9 +264,26 @@ def player_detail(request, player_id):
 # ALL PLAYERS PAGE
 # ---------------------------------------------------------
 def all_players(request):
+    from django.db.models import Prefetch, Sum
+    from collections import defaultdict
+    
+    # Fetch all players with their clubs
     players = Player.objects.select_related("club").all().order_by("gamertag")
-    seasons = Season.objects.all().order_by("id")
-
+    
+    # Fetch all player stats in one query
+    all_stats = PlayerSeasonStats.objects.select_related('season').all()
+    stats_by_player = defaultdict(list)
+    for stat in all_stats:
+        stats_by_player[stat.player_id].append(stat)
+    
+    # Fetch all season awards in one query
+    try:
+        from .models import SeasonAwards
+        all_awards = SeasonAwards.objects.select_related('season').all()
+        awards_by_season = {award.season_id: award for award in all_awards}
+    except:
+        awards_by_season = {}
+    
     player_data = []
     for player in players:
         total_apps = 0
@@ -274,31 +291,28 @@ def all_players(request):
         total_assists = 0
         total_clean_sheets = 0
         awards = []
-
-        for season in seasons:
-            stat = PlayerSeasonStats.objects.filter(player=player, season=season).first()
-            if stat:
-                total_apps += stat.appearances
-                total_goals += stat.goals
-                total_assists += stat.assists
-                total_clean_sheets += stat.clean_sheets
-
-            try:
-                award = getattr(season, 'awards', None)
-                if award:
-                    if award.mvp_id == player.id:
-                        awards.append(f"MVP ({season.name})")
-                    if award.top_scorer_id == player.id:
-                        awards.append(f"Top Scorer ({season.name})")
-                    if award.top_assister_id == player.id:
-                        awards.append(f"Top Assister ({season.name})")
-                    if award.best_defender_id == player.id:
-                        awards.append(f"Best Defender ({season.name})")
-                    if award.best_midfielder_id == player.id:
-                        awards.append(f"Best Midfielder ({season.name})")
-            except Exception:
-                pass
-
+        
+        # Sum up stats from all seasons
+        for stat in stats_by_player.get(player.id, []):
+            total_apps += stat.appearances
+            total_goals += stat.goals
+            total_assists += stat.assists
+            total_clean_sheets += stat.clean_sheets
+            
+            # Check for awards in this season
+            award = awards_by_season.get(stat.season_id)
+            if award:
+                if award.mvp_id == player.id:
+                    awards.append(f"MVP ({stat.season.name})")
+                if award.top_scorer_id == player.id:
+                    awards.append(f"Top Scorer ({stat.season.name})")
+                if award.top_assister_id == player.id:
+                    awards.append(f"Top Assister ({stat.season.name})")
+                if award.best_defender_id == player.id:
+                    awards.append(f"Best Defender ({stat.season.name})")
+                if award.best_midfielder_id == player.id:
+                    awards.append(f"Best Midfielder ({stat.season.name})")
+        
         player_data.append({
             "player": player,
             "club": player.club.name if player.club else "Free Agent",
@@ -309,7 +323,7 @@ def all_players(request):
             "avg_rating": None,
             "awards": awards,
         })
-
+    
     return render(request, "league/all_players.html", {
         "player_data": player_data,
     })
