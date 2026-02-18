@@ -284,8 +284,8 @@ def all_players(request):
                 total_clean_sheets += stat.clean_sheets
 
             try:
-                if hasattr(season, "awards"):
-                    award = season.awards
+                award = getattr(season, 'awards', None)
+                if award:
                     if award.mvp_id == player.id:
                         awards.append(f"MVP ({season.name})")
                     if award.top_scorer_id == player.id:
