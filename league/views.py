@@ -245,11 +245,17 @@ def player_detail(request, player_id):
             award = getattr(season, 'awards', None)
             if award:
                 titles = []
-                if award.mvp_id == player.id: titles.append("MVP")
-                if award.top_scorer_id == player.id: titles.append("Top Scorer")
-                if award.top_assister_id == player.id: titles.append("Top Assister")
-                if award.best_defender_id == player.id: titles.append("Best Defender")
-                if award.best_midfielder_id == player.id: titles.append("Best Midfielder")
+                # Check each award individually
+                if award.mvp_id and award.mvp_id == player.id:
+                    titles.append("MVP")
+                if award.top_scorer_id and award.top_scorer_id == player.id:
+                    titles.append("Top Scorer")
+                if award.top_assister_id and award.top_assister_id == player.id:
+                    titles.append("Top Assister")
+                if award.best_defender_id and award.best_defender_id == player.id:
+                    titles.append("Best Defender")
+                if award.best_midfielder_id and award.best_midfielder_id == player.id:
+                    titles.append("Best Midfielder")
 
                 if titles:
                     awards.append({"season": season.name, "titles": titles})
@@ -305,15 +311,15 @@ def all_players(request):
             # Check for awards in this season
             award = awards_by_season.get(stat.season_id)
             if award:
-                if award.mvp_id == player.id:
+                if award.mvp_id and award.mvp_id == player.id:
                     awards.append(f"MVP ({stat.season.name})")
-                if award.top_scorer_id == player.id:
+                if award.top_scorer_id and award.top_scorer_id == player.id:
                     awards.append(f"Top Scorer ({stat.season.name})")
-                if award.top_assister_id == player.id:
+                if award.top_assister_id and award.top_assister_id == player.id:
                     awards.append(f"Top Assister ({stat.season.name})")
-                if award.best_defender_id == player.id:
+                if award.best_defender_id and award.best_defender_id == player.id:
                     awards.append(f"Best Defender ({stat.season.name})")
-                if award.best_midfielder_id == player.id:
+                if award.best_midfielder_id and award.best_midfielder_id == player.id:
                     awards.append(f"Best Midfielder ({stat.season.name})")
         
         player_data.append({
