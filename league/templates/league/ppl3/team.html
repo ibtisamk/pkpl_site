@@ -8,6 +8,13 @@
 
     <!-- TEAM HEADER -->
     <div class="text-center space-y-3">
+      {% if club.logo_url %}
+      <img 
+        src="{{ club.logo_url }}"
+        alt="{{ club.name }} logo"
+        class="h-24 mx-auto mb-4 object-contain drop-shadow-lg"
+      >
+      {% endif %}
       <h1 class="text-4xl font-extrabold tracking-wide text-yellow-300 drop-shadow-lg">
         {{ club.name }}
       </h1>
