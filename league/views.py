@@ -241,17 +241,20 @@ def player_detail(request, player_id):
 
     awards = []
     for season in seasons:
-        if hasattr(season, "awards"):
-            award = season.awards
-            titles = []
-            if award.mvp_id and award.mvp_id == player.id: titles.append("MVP")
-            if award.top_scorer_id and award.top_scorer_id == player.id: titles.append("Top Scorer")
-            if award.top_assister_id and award.top_assister_id == player.id: titles.append("Top Assister")
-            if award.best_defender_id and award.best_defender_id == player.id: titles.append("Best Defender")
-            if award.best_midfielder_id and award.best_midfielder_id == player.id: titles.append("Best Midfielder")
+        try:
+            award = getattr(season, 'awards', None)
+            if award:
+                titles = []
+                if award.mvp_id == player.id: titles.append("MVP")
+                if award.top_scorer_id == player.id: titles.append("Top Scorer")
+                if award.top_assister_id == player.id: titles.append("Top Assister")
+                if award.best_defender_id == player.id: titles.append("Best Defender")
+                if award.best_midfielder_id == player.id: titles.append("Best Midfielder")
 
-            if titles:
-                awards.append({"season": season.name, "titles": titles})
+                if titles:
+                    awards.append({"season": season.name, "titles": titles})
+        except Exception:
+            pass
 
     return render(request, "league/player_detail.html", {
         "player": player,
