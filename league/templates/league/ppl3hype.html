@@ -77,6 +77,16 @@
           <span class="text-xs uppercase tracking-wide text-blue-100/70">Minutes</span>
         </span>
       </div>
+      
+      <!-- Link to Overview after kickoff -->
+      <div id="overview-link" class="mt-6 hidden">
+        <a
+          href="{% url 'ppl3_overview' %}"
+          class="inline-flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-blue-500/30 transition"
+        >
+          View Full Groups & Standings Overview →
+        </a>
+      </div>
     </div>
   </section>
 
@@ -144,6 +154,7 @@
 
     if (diff <= 0) {
       document.getElementById("countdown").innerHTML = "PPL 3.0 HAS KICKED OFF";
+      document.getElementById("overview-link").classList.remove("hidden");
       return;
     }
 
