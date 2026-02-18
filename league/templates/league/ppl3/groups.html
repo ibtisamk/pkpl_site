@@ -46,8 +46,11 @@
             <tr class="border-t border-white/10 hover:bg-white/10 transition">
               <td class="px-4 py-3 font-semibold">
                 <a href="{% url 'ppl3_team' row.team.id %}"
-                   class="text-blue-300 hover:text-yellow-300 transition">
-                  {{ row.team.name }}
+                   class="flex items-center gap-2 text-blue-300 hover:text-yellow-300 transition">
+                  {% if row.team.logo_url %}
+                  <img src="{{ row.team.logo_url }}" alt="{{ row.team.name }}" class="w-5 h-5 object-contain">
+                  {% endif %}
+                  <span>{{ row.team.name }}</span>
                 </a>
               </td>
               <td class="px-4 py-3 text-center">{{ row.played }}</td>
