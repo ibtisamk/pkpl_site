@@ -22,10 +22,15 @@ class CloudinaryStorage(Storage):
     
     def url(self, name):
         """Return Cloudinary URL for the file"""
+        if not name:
+            return ''
+        # Use cloudinary.CloudinaryImage to generate the proper URL
         return cloudinary.CloudinaryImage(name).build_url()
     
     def exists(self, name):
         """Check if file exists in Cloudinary"""
+        if not name:
+            return False
         try:
             cloudinary.api.resource(name)
             return True
@@ -34,6 +39,8 @@ class CloudinaryStorage(Storage):
     
     def delete(self, name):
         """Delete file from Cloudinary"""
+        if not name:
+            return
         try:
             cloudinary.uploader.destroy(name)
         except Exception:
@@ -41,6 +48,8 @@ class CloudinaryStorage(Storage):
     
     def size(self, name):
         """Get file size"""
+        if not name:
+            return 0
         try:
             resource = cloudinary.api.resource(name)
             return resource.get('bytes', 0)

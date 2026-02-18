@@ -100,8 +100,8 @@
         {% for club in clubs %}
         <a href="{% url 'team_detail' club.id %}">
           <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-lg flex flex-col items-center hover:bg-white/15 transition">
-            {% if club.logo %}
-              <img src="{{ club.logo.url }}" alt="{{ club.name }} Logo" class="w-24 h-24 object-contain" />
+            {% if club.logo_url %}
+              <img src="{{ club.logo_url }}" alt="{{ club.name }} Logo" class="w-24 h-24 object-contain" />
             {% else %}
               <div class="w-24 h-24 flex items-center justify-center rounded-xl bg-white/5 border border-white/20">
                 <span class="text-xs text-blue-100/80 uppercase tracking-wide">No Logo Yet</span>

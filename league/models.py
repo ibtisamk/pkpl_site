@@ -156,6 +156,19 @@ class Club(models.Model):
 
     def __str__(self):
         return self.name
+    
+    @property
+    def logo_url(self):
+        """Get the proper Cloudinary URL for the logo"""
+        if self.logo:
+            try:
+                import cloudinary
+                # If logo.name is a Cloudinary public_id, build the URL
+                return cloudinary.CloudinaryImage(str(self.logo.name)).build_url()
+            except Exception:
+                # Fallback to default URL
+                return self.logo.url if self.logo else None
+        return None
 
 
 # -------------------------
