@@ -219,7 +219,7 @@ class PlayerMatchStatsGroupInline(admin.TabularInline):
     model = PlayerMatchStats
     fk_name = 'group_match'
     extra = 0
-    fields = ('player', 'goals', 'assists', 'minutes_played', 'rating')
+    fields = ('player', 'goals', 'assists', 'minutes_played', 'rating', 'man_of_the_match')
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "player":
@@ -247,7 +247,7 @@ class PlayerMatchStatsKnockoutInline(admin.TabularInline):
     model = PlayerMatchStats
     fk_name = 'knockout_match'
     extra = 0
-    fields = ('player', 'goals', 'assists', 'minutes_played', 'rating')
+    fields = ('player', 'goals', 'assists', 'minutes_played', 'rating', 'man_of_the_match')
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "player":

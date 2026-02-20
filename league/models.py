@@ -365,6 +365,7 @@ class PlayerMatchStats(models.Model):
     assists = models.IntegerField(default=0)
     minutes_played = models.IntegerField(default=0)
     rating = models.FloatField(default=0)
+    man_of_the_match = models.BooleanField(default=False)
 
     def __str__(self):
         match_ref = self.group_match or self.knockout_match or self.fixture
