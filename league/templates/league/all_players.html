@@ -18,6 +18,7 @@
         <th class="py-2 text-center px-4">Assists</th>
         <th class="py-2 text-center px-4">CS</th>
         <th class="py-2 text-center px-4">AMR</th>
+        <th class="py-2 text-center px-4">MOTM</th>
         <th class="py-2 px-4">Awards</th>
       </tr>
     </thead>
@@ -42,6 +43,14 @@
         <td class="py-2 text-center px-4">
           {% if entry.avg_rating %}
             {{ entry.avg_rating }}
+          {% else %}
+            –
+          {% endif %}
+        </td>
+
+        <td class="py-2 text-center px-4">
+          {% if entry.motm_count > 0 %}
+            {{ entry.motm_count }}
           {% else %}
             –
           {% endif %}

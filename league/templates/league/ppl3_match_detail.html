@@ -79,12 +79,13 @@
               <th class="px-4 py-3 text-center">Assists</th>
               <th class="px-4 py-3 text-center">Rating</th>
               <th class="px-4 py-3 text-center">Minutes</th>
+              <th class="px-4 py-3 text-center">MOTM</th>
             </tr>
           </thead>
 
           <tbody class="text-sm">
             {% for s in stats %}
-            <tr class="border-t border-white/10 hover:bg-white/10 transition">
+            <tr class="border-t border-white/10 hover:bg-white/10 transition {% if s.man_of_the_match %}bg-yellow-500/10{% endif %}">
               <td class="px-4 py-3 font-semibold text-blue-200">
                 <a href="{% url 'ppl3_player' s.player.id %}" class="hover:text-yellow-300 transition">
                   {{ s.player.gamertag }}
@@ -94,6 +95,13 @@
               <td class="px-4 py-3 text-center">{{ s.assists }}</td>
               <td class="px-4 py-3 text-center text-yellow-300 font-bold">{{ s.rating }}</td>
               <td class="px-4 py-3 text-center">{{ s.minutes_played }}</td>
+              <td class="px-4 py-3 text-center">
+                {% if s.man_of_the_match %}
+                  <span class="text-yellow-300 font-bold">⭐</span>
+                {% else %}
+                  —
+                {% endif %}
+              </td>
             </tr>
             {% empty %}
             <tr>

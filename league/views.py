@@ -273,7 +273,7 @@ def player_detail(request, player_id):
 # ALL PLAYERS PAGE
 # ---------------------------------------------------------
 def all_players(request):
-    from django.db.models import Prefetch, Sum
+    from django.db.models import Prefetch, Sum, Avg, Count, Q
     from collections import defaultdict
     
     # Fetch all players with their clubs
@@ -284,6 +284,12 @@ def all_players(request):
     stats_by_player = defaultdict(list)
     for stat in all_stats:
         stats_by_player[stat.player_id].append(stat)
+    
+    # Fetch all match stats for calculating AMR and MOTM
+    all_match_stats = PlayerMatchStats.objects.all()
+    match_stats_by_player = defaultdict(list)
+    for ms in all_match_stats:
+        match_stats_by_player[ms.player_id].append(ms)
     
     # Fetch all season awards in one query
     try:
@@ -308,6 +314,16 @@ def all_players(request):
             total_assists += stat.assists
             total_clean_sheets += stat.clean_sheets
         
+        # Calculate average match rating and MOTM count
+        player_match_stats = match_stats_by_player.get(player.id, [])
+        avg_rating = None
+        motm_count = 0
+        if player_match_stats:
+            ratings = [ms.rating for ms in player_match_stats if ms.rating and ms.rating > 0]
+            if ratings:
+                avg_rating = round(sum(ratings) / len(ratings), 2)
+            motm_count = sum(1 for ms in player_match_stats if ms.man_of_the_match)
+        
         # Check awards for ALL seasons (not just seasons with stats)
         for season_id, award in awards_by_season.items():
             if award.mvp_id and award.mvp_id == player.id:
@@ -328,7 +344,8 @@ def all_players(request):
             "goals": total_goals,
             "assists": total_assists,
             "clean_sheets": total_clean_sheets,
-            "avg_rating": None,
+            "avg_rating": avg_rating,
+            "motm_count": motm_count,
             "awards": awards,
         })
     
@@ -683,11 +700,15 @@ def ppl3_player(request, player_id):
         Q(knockout_match__round__season=season) |
         Q(fixture__season=season)
     ).select_related("group_match__fixture", "knockout_match__round", "fixture")
+    
+    # Count MOTM awards for this season
+    motm_count = match_stats.filter(man_of_the_match=True).count()
 
     return render(request, "league/ppl3/player.html", {
         "player": player,
         "season": season,
         "stats": stats,
         "match_stats": match_stats,
+        "motm_count": motm_count,
     })
 
