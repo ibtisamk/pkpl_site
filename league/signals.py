@@ -143,6 +143,15 @@ def rebuild_player_season_stats(player_obj, season_obj):
         Q(knockout_match__round__season=season_obj) |
         Q(fixture__season=season_obj),
         player=player_obj
+    ).select_related(
+        'group_match',
+        'knockout_match', 
+        'fixture'
+    ).prefetch_related(
+        'group_match__home_players',
+        'group_match__away_players',
+        'knockout_match__home_players',
+        'knockout_match__away_players'
     )
 
     total_goals = 0
