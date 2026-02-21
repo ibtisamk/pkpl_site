@@ -280,6 +280,13 @@ def _resolve_season_from_pms(pms_obj):
 
 @receiver(post_save, sender=PlayerMatchStats)
 def update_player_season_stats(sender, instance, created, **kwargs):
+    # TEMPORARILY DISABLED TO PREVENT TIMEOUT
+    # This signal rebuilds all season stats when a single match stat is saved
+    # which causes timeout when there are many match stats
+    # You can manually rebuild stats using the management command:
+    # python manage.py rebuild_player_season_stats
+    return
+    
     # Rebuild full season stats for the affected player/season to ensure consistency
     pms = instance
 
