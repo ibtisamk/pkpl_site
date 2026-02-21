@@ -368,8 +368,7 @@ class PlayerMatchStats(models.Model):
     man_of_the_match = models.BooleanField(default=False)
 
     def __str__(self):
-        match_ref = self.group_match or self.knockout_match or self.fixture
-        return f"{self.player} - {match_ref}"
+        return f"{self.player.gamertag} - Match Stats"
 
 
 # -------------------------

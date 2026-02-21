@@ -221,6 +221,9 @@ class PlayerMatchStatsGroupInline(admin.TabularInline):
     extra = 0
     fields = ('player', 'goals', 'assists', 'minutes_played', 'rating', 'man_of_the_match')
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('player', 'player__club')
+
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "player":
             match_id = None
@@ -248,6 +251,9 @@ class PlayerMatchStatsKnockoutInline(admin.TabularInline):
     fk_name = 'knockout_match'
     extra = 0
     fields = ('player', 'goals', 'assists', 'minutes_played', 'rating', 'man_of_the_match')
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('player', 'player__club')
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "player":
