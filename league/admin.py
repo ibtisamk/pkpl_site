@@ -236,7 +236,9 @@ class PlayerMatchStatsGroupInline(admin.TabularInline):
 
             if match_id:
                 try:
-                    gm = GroupMatch.objects.get(id=match_id)
+                    gm = GroupMatch.objects.select_related(
+                        'fixture__home_club', 'fixture__away_club'
+                    ).get(id=match_id)
                     home_players = Player.objects.filter(club=gm.fixture.home_club)
                     away_players = Player.objects.filter(club=gm.fixture.away_club)
                     kwargs["queryset"] = (home_players | away_players).distinct()
@@ -267,7 +269,9 @@ class PlayerMatchStatsKnockoutInline(admin.TabularInline):
 
             if match_id:
                 try:
-                    km = KnockoutMatch.objects.get(id=match_id)
+                    km = KnockoutMatch.objects.select_related(
+                        'home_club', 'away_club'
+                    ).get(id=match_id)
                     home_players = Player.objects.filter(club=km.home_club)
                     away_players = Player.objects.filter(club=km.away_club)
                     kwargs["queryset"] = (home_players | away_players).distinct()
