@@ -126,6 +126,7 @@ def update_team_stats(sender, instance, **kwargs):
                 stats.draws += 1
                 stats.points += 1
 
+        stats.goal_difference = stats.goals_for - stats.goals_against
         stats.save()
 
 
