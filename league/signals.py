@@ -335,6 +335,11 @@ def player_match_stats_deleted(sender, instance, **kwargs):
 @receiver(post_save, sender=GroupMatch)
 def rebuild_players_for_group_match(sender, instance, **kwargs):
     match = instance
+    
+    # Skip if flag is set (during admin formset save)
+    if getattr(match, '_skip_rebuild_signal', False):
+        return
+    
     season = match.fixture.season if getattr(match, 'fixture', None) else None
     if not season or not season.is_active:
         return
