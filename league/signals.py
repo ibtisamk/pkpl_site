@@ -169,17 +169,24 @@ def rebuild_player_season_stats(player_obj, season_obj):
             appeared = True
 
         # check membership in home/away players where available
+        # Use list() to evaluate the prefetched queryset once instead of .all()
         if not appeared and getattr(row, 'group_match', None) and row.group_match is not None:
-            if player_obj in row.group_match.home_players.all() or player_obj in row.group_match.away_players.all():
+            home_players = list(row.group_match.home_players.all())
+            away_players = list(row.group_match.away_players.all())
+            if player_obj in home_players or player_obj in away_players:
                 appeared = True
         if not appeared and getattr(row, 'knockout_match', None) and row.knockout_match is not None:
-            if player_obj in row.knockout_match.home_players.all() or player_obj in row.knockout_match.away_players.all():
+            home_players = list(row.knockout_match.home_players.all())
+            away_players = list(row.knockout_match.away_players.all())
+            if player_obj in home_players or player_obj in away_players:
                 appeared = True
         if not appeared and getattr(row, 'fixture', None) and row.fixture is not None:
             # prefer group_match players if present on fixture
             if hasattr(row.fixture, 'group_match') and row.fixture.group_match is not None:
                 gm = row.fixture.group_match
-                if player_obj in gm.home_players.all() or player_obj in gm.away_players.all():
+                home_players = list(gm.home_players.all())
+                away_players = list(gm.away_players.all())
+                if player_obj in home_players or player_obj in away_players:
                     appeared = True
 
         if appeared:
@@ -189,15 +196,19 @@ def rebuild_player_season_stats(player_obj, season_obj):
         try:
             if getattr(row, 'group_match', None) and row.group_match is not None:
                 gm = row.group_match
-                if player_obj in gm.home_players.all() and gm.away_goals == 0:
+                home_players = list(gm.home_players.all())
+                away_players = list(gm.away_players.all())
+                if player_obj in home_players and gm.away_goals == 0:
                     total_clean_sheets += 1
-                if player_obj in gm.away_players.all() and gm.home_goals == 0:
+                if player_obj in away_players and gm.home_goals == 0:
                     total_clean_sheets += 1
             elif getattr(row, 'knockout_match', None) and row.knockout_match is not None:
                 km = row.knockout_match
-                if player_obj in km.home_players.all() and km.away_goals == 0:
+                home_players = list(km.home_players.all())
+                away_players = list(km.away_players.all())
+                if player_obj in home_players and km.away_goals == 0:
                     total_clean_sheets += 1
-                if player_obj in km.away_players.all() and km.home_goals == 0:
+                if player_obj in away_players and km.home_goals == 0:
                     total_clean_sheets += 1
         except Exception:
             pass
