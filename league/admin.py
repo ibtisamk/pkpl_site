@@ -239,8 +239,8 @@ class PlayerMatchStatsGroupInline(admin.TabularInline):
                     gm = GroupMatch.objects.select_related(
                         'fixture__home_club', 'fixture__away_club'
                     ).get(id=match_id)
-                    home_players = Player.objects.filter(club=gm.fixture.home_club)
-                    away_players = Player.objects.filter(club=gm.fixture.away_club)
+                    home_players = Player.objects.filter(club=gm.fixture.home_club).select_related('club')
+                    away_players = Player.objects.filter(club=gm.fixture.away_club).select_related('club')
                     kwargs["queryset"] = (home_players | away_players).distinct()
                 except GroupMatch.DoesNotExist:
                     pass
@@ -272,8 +272,8 @@ class PlayerMatchStatsKnockoutInline(admin.TabularInline):
                     km = KnockoutMatch.objects.select_related(
                         'home_club', 'away_club'
                     ).get(id=match_id)
-                    home_players = Player.objects.filter(club=km.home_club)
-                    away_players = Player.objects.filter(club=km.away_club)
+                    home_players = Player.objects.filter(club=km.home_club).select_related('club')
+                    away_players = Player.objects.filter(club=km.away_club).select_related('club')
                     kwargs["queryset"] = (home_players | away_players).distinct()
                 except KnockoutMatch.DoesNotExist:
                     pass
@@ -298,9 +298,9 @@ class GroupMatchAdmin(admin.ModelAdmin):
             try:
                 gm = GroupMatch.objects.select_related('fixture__home_club', 'fixture__away_club').get(pk=obj_id)
                 if db_field.name == 'home_players' and gm.fixture and gm.fixture.home_club:
-                    kwargs['queryset'] = Player.objects.filter(club=gm.fixture.home_club)
+                    kwargs['queryset'] = Player.objects.filter(club=gm.fixture.home_club).select_related('club')
                 if db_field.name == 'away_players' and gm.fixture and gm.fixture.away_club:
-                    kwargs['queryset'] = Player.objects.filter(club=gm.fixture.away_club)
+                    kwargs['queryset'] = Player.objects.filter(club=gm.fixture.away_club).select_related('club')
             except GroupMatch.DoesNotExist:
                 pass
 
