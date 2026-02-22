@@ -337,10 +337,8 @@ class GroupMatchAdmin(admin.ModelAdmin):
     def save_related(self, request, form, formsets, change):
         """
         Override to prevent signal timeout when saving inline PlayerMatchStats.
-        Temporarily disable the rebuild signal, then manually trigger it once after all saves.
+        Skip the automatic rebuild signal entirely during admin saves.
         """
-        from league.signals import rebuild_players_for_group_match
-        
         # Set flag to skip signal
         obj = form.instance
         obj._skip_rebuild_signal = True
@@ -352,9 +350,22 @@ class GroupMatchAdmin(admin.ModelAdmin):
             # Remove flag
             if hasattr(obj, '_skip_rebuild_signal'):
                 del obj._skip_rebuild_signal
-            
-            # Manually trigger rebuild once after all saves
-            rebuild_players_for_group_match(sender=GroupMatch, instance=obj)
+    
+    def save_model(self, request, obj, form, change):
+        """Save and notify user about manual stats rebuild."""
+        obj._skip_rebuild_signal = True
+        try:
+            super().save_model(request, obj, form, change)
+        finally:
+            if hasattr(obj, '_skip_rebuild_signal'):
+                del obj._skip_rebuild_signal
+        
+        if change:
+            messages.info(
+                request, 
+                "Match saved. Player season stats will be updated automatically in the background. "
+                "If stats don't update, run: python manage.py rebuild_player_season_stats"
+            )
 
     # Removed formfield_for_manytomany override; not needed for custom Group model
 
