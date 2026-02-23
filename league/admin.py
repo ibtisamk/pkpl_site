@@ -208,7 +208,7 @@ class PlayerRegistrationAdmin(admin.ModelAdmin):
 class PlayerAdmin(admin.ModelAdmin):
     list_display = ('gamertag', 'platform', 'club', 'position', 'location', 'age')
     list_filter = ('platform', 'club', 'position', 'location')
-    search_fields = ('gamertag',)
+    search_fields = ('gamertag', 'club__name')
 
 
 # ============================================================
@@ -220,65 +220,20 @@ class PlayerMatchStatsGroupInline(admin.TabularInline):
     fk_name = 'group_match'
     extra = 0
     fields = ('player', 'goals', 'assists', 'minutes_played', 'rating', 'man_of_the_match')
+    autocomplete_fields = ['player']
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('player', 'player__club')
-
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == "player":
-            match_id = None
-
-            if request.resolver_match.kwargs.get("object_id"):
-                match_id = request.resolver_match.kwargs.get("object_id")
-
-            if request.GET.get("group_match"):
-                match_id = request.GET.get("group_match")
-
-            if match_id:
-                try:
-                    gm = GroupMatch.objects.select_related(
-                        'fixture__home_club', 'fixture__away_club'
-                    ).get(id=match_id)
-                    home_players = Player.objects.filter(club=gm.fixture.home_club).select_related('club')
-                    away_players = Player.objects.filter(club=gm.fixture.away_club).select_related('club')
-                    kwargs["queryset"] = (home_players | away_players).distinct()
-                except GroupMatch.DoesNotExist:
-                    pass
-
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
 
 class PlayerMatchStatsKnockoutInline(admin.TabularInline):
     model = PlayerMatchStats
     fk_name = 'knockout_match'
     extra = 0
     fields = ('player', 'goals', 'assists', 'minutes_played', 'rating', 'man_of_the_match')
+    autocomplete_fields = ['player']
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('player', 'player__club')
-
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == "player":
-            match_id = None
-
-            if request.resolver_match.kwargs.get("object_id"):
-                match_id = request.resolver_match.kwargs.get("object_id")
-
-            if request.GET.get("knockout_match"):
-                match_id = request.GET.get("knockout_match")
-
-            if match_id:
-                try:
-                    km = KnockoutMatch.objects.select_related(
-                        'home_club', 'away_club'
-                    ).get(id=match_id)
-                    home_players = Player.objects.filter(club=km.home_club).select_related('club')
-                    away_players = Player.objects.filter(club=km.away_club).select_related('club')
-                    kwargs["queryset"] = (home_players | away_players).distinct()
-                except KnockoutMatch.DoesNotExist:
-                    pass
-
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 # ============================================================
