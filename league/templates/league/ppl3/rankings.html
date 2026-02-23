@@ -1,0 +1,113 @@
+{% extends "league/base.html" %}
+{% load static %}
+{% block content %}
+
+<!-- PREMIUM PPL3 BACKGROUND -->
+<div class="min-h-screen bg-gradient-to-b from-[#0b2f2f] via-[#0f3d4c] to-[#0b2f2f] text-white px-4 py-10">
+
+  <div class="max-w-7xl mx-auto space-y-8">
+
+    <!-- HEADER -->
+    <div class="text-center space-y-2">
+      <h1 class="text-4xl font-extrabold tracking-wide text-yellow-300 drop-shadow-lg">
+        PPL 3.0 — Player Rankings
+      </h1>
+      <p class="text-blue-200/80 text-sm">
+        View top performers by position and gameweek
+      </p>
+    </div>
+
+    <!-- POSITION TABS -->
+    <div class="flex flex-wrap justify-center gap-2">
+      {% for pos in positions %}
+      <a href="?position={{ pos.key }}{% if current_gameweek != 'all' %}&gameweek={{ current_gameweek }}{% endif %}"
+         class="px-6 py-2 rounded-full font-semibold transition {% if current_position == pos.key %}bg-yellow-400 text-gray-900{% else %}bg-white/10 text-blue-200 hover:bg-white/20{% endif %}">
+        {{ pos.label }}
+      </a>
+      {% endfor %}
+    </div>
+
+    <!-- GAMEWEEK FILTER -->
+    <div class="flex justify-center gap-4 items-center">
+      <label class="text-blue-200 font-semibold">Filter by Gameweek:</label>
+      <select onchange="window.location.href='?position={{ current_position }}&gameweek=' + this.value"
+              class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400">
+        <option value="all" {% if current_gameweek == 'all' %}selected{% endif %}>All Gameweeks</option>
+        {% for gw in gameweeks %}
+        <option value="{{ gw }}" {% if current_gameweek|stringformat:"s" == gw|stringformat:"s" %}selected{% endif %}>
+          Gameweek {{ gw }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- RANKINGS TABLE -->
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-xl overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-blue-200/80 border-b border-white/10">
+            <th class="px-4 py-3 text-left">Rank</th>
+            <th class="px-4 py-3 text-left">Player</th>
+            <th class="px-4 py-3 text-center">Position</th>
+            <th class="px-4 py-3 text-center">Team</th>
+            <th class="px-4 py-3 text-center">Apps</th>
+            <th class="px-4 py-3 text-center">Goals</th>
+            <th class="px-4 py-3 text-center">Assists</th>
+            <th class="px-4 py-3 text-center">Clean Sheets</th>
+            <th class="px-4 py-3 text-center">Rating</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for stat in players %}
+          <tr class="border-b border-white/5 hover:bg-white/5 transition">
+            <td class="px-4 py-3 text-blue-200 font-bold">
+              {% if forloop.counter <= 3 %}
+                <span class="{% if forloop.counter == 1 %}text-yellow-400{% elif forloop.counter == 2 %}text-gray-300{% else %}text-orange-400{% endif %}">
+                  {{ forloop.counter }}
+                </span>
+              {% else %}
+                {{ forloop.counter }}
+              {% endif %}
+            </td>
+            <td class="px-4 py-3">
+              <a href="{% url 'ppl3_player' stat.player.id %}" 
+                 class="font-semibold hover:text-yellow-300 transition">
+                {{ stat.player.gamertag }}
+              </a>
+            </td>
+            <td class="px-4 py-3 text-center text-blue-200/80">{{ stat.player.position }}</td>
+            <td class="px-4 py-3 text-center">
+              <a href="{% url 'ppl3_team' stat.club.id %}" 
+                 class="text-blue-200/80 hover:text-yellow-300 transition">
+                {{ stat.club.short_name|default:stat.club.name }}
+              </a>
+            </td>
+            <td class="px-4 py-3 text-center">{{ stat.appearances }}</td>
+            <td class="px-4 py-3 text-center font-bold text-yellow-300">{{ stat.goals }}</td>
+            <td class="px-4 py-3 text-center text-blue-300">{{ stat.assists }}</td>
+            <td class="px-4 py-3 text-center">{{ stat.clean_sheets }}</td>
+            <td class="px-4 py-3 text-center font-bold text-green-400">{{ stat.rating|floatformat:2 }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9" class="px-4 py-12 text-center text-blue-200/70">
+              No player statistics available for this filter.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- BACK TO OVERVIEW -->
+    <div class="text-center">
+      <a href="{% url 'ppl3_overview' %}"
+         class="inline-block px-6 py-3 bg-white/10 hover:bg-white/20 rounded-lg font-semibold transition">
+        ← Back to Overview
+      </a>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

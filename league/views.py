@@ -489,12 +489,94 @@ def ppl3_overview(request):
             "matches": formatted_matches,
         })
 
+    # -----------------------------
+    # TOP 10 PLAYERS SNAPSHOT
+    # -----------------------------
+    top_players = (
+        PlayerSeasonStats.objects
+        .filter(season=season, appearances__gte=1)
+        .select_related('player', 'club')
+        .order_by('-rating', '-goals', '-assists')[:10]
+    )
+
     return render(request, "league/ppl3/overview.html", {
         "season": season,
         "groups": group_data,
         "fixtures": fixtures,
         "results": results,
         "knockouts": knockout_data,
+        "top_players": top_players,
+    })
+
+
+def ppl3_rankings(request):
+    """
+    PPL3 player rankings with filtering by position and gameweek.
+    """
+    season = Season.objects.filter(is_active=True).first()
+    if not season:
+        return render(request, "league/ppl3/rankings.html", {"season": None})
+
+    # Get filter parameters
+    position_filter = request.GET.get('position', 'all')
+    gameweek_filter = request.GET.get('gameweek', 'all')
+
+    # Base queryset
+    players_qs = (
+        PlayerSeasonStats.objects
+        .filter(season=season, appearances__gte=1)
+        .select_related('player', 'club', 'player__club')
+    )
+
+    # Apply position filter
+    position_map = {
+        'attackers': ['ST', 'LW', 'RW'],
+        'midfielders': ['CM', 'CDM', 'CAM', 'LW', 'RW'],
+        'defenders': ['LB', 'CB', 'RB'],
+        'goalkeepers': ['GK'],
+    }
+
+    if position_filter in position_map:
+        players_qs = players_qs.filter(player__position__in=position_map[position_filter])
+
+    # Note: Gameweek filtering would require PlayerMatchStats aggregation
+    # For now, we'll show season totals and add gameweek support later if needed
+    if gameweek_filter != 'all':
+        try:
+            week_num = int(gameweek_filter)
+            # This would require filtering by week_number in fixtures
+            # For now, showing all stats but we can enhance this
+        except ValueError:
+            pass
+
+    # Order by rating, then goals, then assists
+    players = players_qs.order_by('-rating', '-goals', '-assists')
+
+    # Position tabs for template
+    positions = [
+        {'key': 'all', 'label': 'Overall'},
+        {'key': 'attackers', 'label': 'Attackers'},
+        {'key': 'midfielders', 'label': 'Midfielders'},
+        {'key': 'defenders', 'label': 'Defenders'},
+        {'key': 'goalkeepers', 'label': 'Goalkeepers'},
+    ]
+
+    # Get available gameweeks
+    gameweeks = list(
+        Fixture.objects
+        .filter(season=season, week_number__isnull=False)
+        .values_list('week_number', flat=True)
+        .distinct()
+        .order_by('week_number')
+    )
+
+    return render(request, "league/ppl3/rankings.html", {
+        "season": season,
+        "players": players,
+        "positions": positions,
+        "current_position": position_filter,
+        "gameweeks": gameweeks,
+        "current_gameweek": gameweek_filter,
     })
 
 

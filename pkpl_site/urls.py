@@ -65,6 +65,7 @@ urlpatterns = [
     # -----------------------------------------------------
     path("ppl3/", views.ppl3, name="ppl3"),  # redirect → ppl3_overview
     path("ppl3/overview/", views.ppl3_overview, name="ppl3_overview"),
+    path("ppl3/rankings/", views.ppl3_rankings, name="ppl3_rankings"),
     path("ppl3/groups/", views.ppl3_groups, name="ppl3_groups"),
     path("ppl3/fixtures/", views.ppl3_fixtures, name="ppl3_fixtures"),
     path("ppl3/knockouts/", views.ppl3_knockouts, name="ppl3_knockouts"),
