@@ -45,6 +45,50 @@
       </div>
     </section>
 
+    <!-- TOP PLAYERS SNAPSHOT -->
+    <section>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold text-yellow-300">Top Players</h2>
+        <a href="{% url 'ppl3_rankings' %}"
+           class="text-blue-300 hover:text-yellow-300 text-sm font-semibold transition">
+          View Full Rankings →
+        </a>
+      </div>
+
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-xl overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-blue-200/80 border-b border-white/10">
+              <th class="px-4 py-3 text-left">#</th>
+              <th class="px-4 py-3 text-left">Player</th>
+              <th class="px-4 py-3 text-center">Team</th>
+              <th class="px-4 py-3 text-center">Apps</th>
+              <th class="px-4 py-3 text-center">Goals</th>
+              <th class="px-4 py-3 text-center">Assists</th>
+              <th class="px-4 py-3 text-center">Rating</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for stat in top_players %}
+            <tr class="border-b border-white/5 hover:bg-white/5 transition">
+              <td class="px-4 py-3 text-blue-200">{{ forloop.counter }}</td>
+              <td class="px-4 py-3 font-semibold">{{ stat.player.gamertag }}</td>
+              <td class="px-4 py-3 text-center text-blue-200/80">{{ stat.club.short_name|default:stat.club.name }}</td>
+              <td class="px-4 py-3 text-center">{{ stat.appearances }}</td>
+              <td class="px-4 py-3 text-center font-bold text-yellow-300">{{ stat.goals }}</td>
+              <td class="px-4 py-3 text-center text-blue-300">{{ stat.assists }}</td>
+              <td class="px-4 py-3 text-center font-bold">{{ stat.rating|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="px-4 py-8 text-center text-blue-200/70">No player stats available yet.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- KNOCKOUT PREVIEW -->
     <section>
       <h2 class="text-2xl font-bold mb-4 text-yellow-300">Knockout Rounds</h2>
