@@ -137,14 +137,30 @@ def update_team_stats(sender, instance, **kwargs):
 def rebuild_player_season_stats(player_obj, season_obj):
     """Recompute and save PlayerSeasonStats for a player and season by
     aggregating all PlayerMatchStats rows belonging to that season."""
-    from django.db.models import Q
+    from django.db.models import Q, Sum, Avg, Count
 
+    # Use aggregation for most stats
     pms_qs = PlayerMatchStats.objects.filter(
         Q(group_match__fixture__season=season_obj) |
         Q(knockout_match__round__season=season_obj) |
         Q(fixture__season=season_obj),
         player=player_obj
-    ).select_related(
+    )
+    
+    # Get aggregated stats efficiently
+    agg_stats = pms_qs.aggregate(
+        total_goals=Sum('goals'),
+        total_assists=Sum('assists'),
+        avg_rating=Avg('rating'),
+        stat_count=Count('id')
+    )
+    
+    total_goals = agg_stats['total_goals'] or 0
+    total_assists = agg_stats['total_assists'] or 0
+    avg_rating = agg_stats['avg_rating'] or 0
+    
+    # For appearances and clean sheets, we need to iterate (but with optimized query)
+    pms_qs = pms_qs.select_related(
         'group_match',
         'knockout_match', 
         'fixture'
@@ -155,15 +171,10 @@ def rebuild_player_season_stats(player_obj, season_obj):
         'knockout_match__away_players'
     )
 
-    total_goals = 0
-    total_assists = 0
     total_appearances = 0
     total_clean_sheets = 0
-    ratings = []
 
     for row in pms_qs:
-        total_goals += row.goals
-        total_assists += row.assists
 
         appeared = False
         if row.minutes_played and row.minutes_played > 0:
@@ -214,9 +225,6 @@ def rebuild_player_season_stats(player_obj, season_obj):
         except Exception:
             pass
 
-        if row.rating and row.rating > 0:
-            ratings.append(row.rating)
-
     season_stats, _ = PlayerSeasonStats.objects.get_or_create(
         player=player_obj,
         season=season_obj,
@@ -228,7 +236,7 @@ def rebuild_player_season_stats(player_obj, season_obj):
     season_stats.assists = total_assists
     season_stats.appearances = total_appearances
     season_stats.clean_sheets = total_clean_sheets
-    season_stats.rating = sum(ratings) / len(ratings) if ratings else 0
+    season_stats.rating = avg_rating
     season_stats.save()
 
 
@@ -332,7 +340,7 @@ def player_match_stats_deleted(sender, instance, **kwargs):
     rebuild_player_season_stats(pms.player, season)
 
 
-# Recompute player season stats for all players involved in a match when the match is saved
+# Recompute player season stats for players with match stats only
 @receiver(post_save, sender=GroupMatch)
 def rebuild_players_for_group_match(sender, instance, **kwargs):
     match = instance
@@ -348,26 +356,15 @@ def rebuild_players_for_group_match(sender, instance, **kwargs):
     if _SKIP_REBUILD_DURING_SEASON_DELETE:
         return
 
-    players = set()
-    try:
-        players.update(list(match.home_players.all()))
-    except Exception:
-        pass
-    try:
-        players.update(list(match.away_players.all()))
-    except Exception:
-        pass
-
-    # Also include any players who have PlayerMatchStats rows referencing this group match
-    for pid in PlayerMatchStats.objects.filter(group_match=match).values_list('player', flat=True).distinct():
-        try:
-            players.add(match.home_players.model.objects.get(pk=pid))
-        except Exception:
-            try:
-                players.add(match.away_players.model.objects.get(pk=pid))
-            except Exception:
-                pass
-
+    # Only rebuild players who actually have PlayerMatchStats in this match
+    player_ids = PlayerMatchStats.objects.filter(group_match=match).values_list('player_id', flat=True).distinct()
+    
+    if not player_ids:
+        return
+    
+    from .models import Player
+    players = Player.objects.filter(id__in=player_ids).select_related('club')
+    
     for p in players:
         rebuild_player_season_stats(p, season)
 

@@ -336,36 +336,13 @@ class GroupMatchAdmin(admin.ModelAdmin):
 
     def save_related(self, request, form, formsets, change):
         """
-        Override to prevent signal timeout when saving inline PlayerMatchStats.
-        Skip the automatic rebuild signal entirely during admin saves.
+        Save related objects and trigger efficient stats rebuild.
         """
-        # Set flag to skip signal
-        obj = form.instance
-        obj._skip_rebuild_signal = True
-        
-        try:
-            # Save all related objects (formsets)
-            super().save_related(request, form, formsets, change)
-        finally:
-            # Remove flag
-            if hasattr(obj, '_skip_rebuild_signal'):
-                del obj._skip_rebuild_signal
+        super().save_related(request, form, formsets, change)
     
     def save_model(self, request, obj, form, change):
-        """Save and notify user about manual stats rebuild."""
-        obj._skip_rebuild_signal = True
-        try:
-            super().save_model(request, obj, form, change)
-        finally:
-            if hasattr(obj, '_skip_rebuild_signal'):
-                del obj._skip_rebuild_signal
-        
-        if change:
-            messages.info(
-                request, 
-                "Match saved. Player season stats will be updated automatically in the background. "
-                "If stats don't update, run: python manage.py rebuild_player_season_stats"
-            )
+        """Save the match."""
+        super().save_model(request, obj, form, change)
 
     # Removed formfield_for_manytomany override; not needed for custom Group model
 
