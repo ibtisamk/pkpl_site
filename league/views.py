@@ -499,6 +499,23 @@ def ppl3_overview(request):
         .order_by('-rating', '-goals', '-assists')[:10]
     )
 
+    # -----------------------------
+    # TOP 5 SCORERS & ASSISTERS
+    # -----------------------------
+    top_scorers = (
+        PlayerSeasonStats.objects
+        .filter(season=season, goals__gt=0)
+        .select_related('player', 'club')
+        .order_by('-goals', '-assists', '-rating')[:5]
+    )
+
+    top_assisters = (
+        PlayerSeasonStats.objects
+        .filter(season=season, assists__gt=0)
+        .select_related('player', 'club')
+        .order_by('-assists', '-goals', '-rating')[:5]
+    )
+
     return render(request, "league/ppl3/overview.html", {
         "season": season,
         "groups": group_data,
@@ -506,6 +523,8 @@ def ppl3_overview(request):
         "results": results,
         "knockouts": knockout_data,
         "top_players": top_players,
+        "top_scorers": top_scorers,
+        "top_assisters": top_assisters,
     })
 
 
@@ -570,6 +589,21 @@ def ppl3_rankings(request):
         .order_by('week_number')
     )
 
+    # Top scorers and assisters (full lists)
+    top_scorers = (
+        PlayerSeasonStats.objects
+        .filter(season=season, goals__gt=0)
+        .select_related('player', 'club')
+        .order_by('-goals', '-assists', '-rating')
+    )
+
+    top_assisters = (
+        PlayerSeasonStats.objects
+        .filter(season=season, assists__gt=0)
+        .select_related('player', 'club')
+        .order_by('-assists', '-goals', '-rating')
+    )
+
     return render(request, "league/ppl3/rankings.html", {
         "season": season,
         "players": players,
@@ -577,6 +611,8 @@ def ppl3_rankings(request):
         "current_position": position_filter,
         "gameweeks": gameweeks,
         "current_gameweek": gameweek_filter,
+        "top_scorers": top_scorers,
+        "top_assisters": top_assisters,
     })
 
 

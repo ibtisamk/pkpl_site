@@ -99,6 +99,108 @@
       </table>
     </div>
 
+    <!-- TOP SCORERS TABLE -->
+    <div id="scorers" class="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-xl overflow-x-auto">
+      <h3 class="text-2xl font-bold text-yellow-300 mb-4">🥇 Top Scorers</h3>
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-blue-200/80 border-b border-white/10">
+            <th class="px-4 py-3 text-left">Rank</th>
+            <th class="px-4 py-3 text-left">Player</th>
+            <th class="px-4 py-3 text-center">Team</th>
+            <th class="px-4 py-3 text-center">Goals</th>
+            <th class="px-4 py-3 text-center">Assists</th>
+            <th class="px-4 py-3 text-center">Apps</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for stat in top_scorers %}
+          <tr class="border-b border-white/5 hover:bg-white/5 transition">
+            <td class="px-4 py-3 text-blue-200 font-bold">
+              {% if forloop.counter <= 3 %}
+                <span class="{% if forloop.counter == 1 %}text-yellow-400{% elif forloop.counter == 2 %}text-gray-300{% else %}text-orange-400{% endif %}">
+                  {{ forloop.counter }}
+                </span>
+              {% else %}
+                {{ forloop.counter }}
+              {% endif %}
+            </td>
+            <td class="px-4 py-3">
+              <a href="{% url 'ppl3_player' stat.player.id %}" 
+                 class="font-semibold hover:text-yellow-300 transition">
+                {{ stat.player.gamertag }}
+              </a>
+            </td>
+            <td class="px-4 py-3 text-center">
+              <a href="{% url 'ppl3_team' stat.club.id %}" 
+                 class="text-blue-200/80 hover:text-yellow-300 transition">
+                {{ stat.club.short_name|default:stat.club.name }}
+              </a>
+            </td>
+            <td class="px-4 py-3 text-center font-bold text-yellow-300">{{ stat.goals }}</td>
+            <td class="px-4 py-3 text-center text-blue-300">{{ stat.assists }}</td>
+            <td class="px-4 py-3 text-center">{{ stat.appearances }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="px-4 py-8 text-center text-blue-200/70">No goals scored yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TOP ASSISTERS TABLE -->
+    <div id="assisters" class="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-xl overflow-x-auto">
+      <h3 class="text-2xl font-bold text-yellow-300 mb-4">🎯 Top Assisters</h3>
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-blue-200/80 border-b border-white/10">
+            <th class="px-4 py-3 text-left">Rank</th>
+            <th class="px-4 py-3 text-left">Player</th>
+            <th class="px-4 py-3 text-center">Team</th>
+            <th class="px-4 py-3 text-center">Assists</th>
+            <th class="px-4 py-3 text-center">Goals</th>
+            <th class="px-4 py-3 text-center">Apps</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for stat in top_assisters %}
+          <tr class="border-b border-white/5 hover:bg-white/5 transition">
+            <td class="px-4 py-3 text-blue-200 font-bold">
+              {% if forloop.counter <= 3 %}
+                <span class="{% if forloop.counter == 1 %}text-yellow-400{% elif forloop.counter == 2 %}text-gray-300{% else %}text-orange-400{% endif %}">
+                  {{ forloop.counter }}
+                </span>
+              {% else %}
+                {{ forloop.counter }}
+              {% endif %}
+            </td>
+            <td class="px-4 py-3">
+              <a href="{% url 'ppl3_player' stat.player.id %}" 
+                 class="font-semibold hover:text-yellow-300 transition">
+                {{ stat.player.gamertag }}
+              </a>
+            </td>
+            <td class="px-4 py-3 text-center">
+              <a href="{% url 'ppl3_team' stat.club.id %}" 
+                 class="text-blue-200/80 hover:text-yellow-300 transition">
+                {{ stat.club.short_name|default:stat.club.name }}
+              </a>
+            </td>
+            <td class="px-4 py-3 text-center font-bold text-blue-300">{{ stat.assists }}</td>
+            <td class="px-4 py-3 text-center text-yellow-300">{{ stat.goals }}</td>
+            <td class="px-4 py-3 text-center">{{ stat.appearances }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="px-4 py-8 text-center text-blue-200/70">No assists recorded yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
     <!-- BACK TO OVERVIEW -->
     <div class="text-center">
       <a href="{% url 'ppl3_overview' %}"

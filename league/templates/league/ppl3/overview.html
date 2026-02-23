@@ -89,6 +89,85 @@
       </div>
     </section>
 
+    <!-- TOP SCORERS & ASSISTERS SNAPSHOT -->
+    <section>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Top Scorers -->
+        <div>
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-yellow-300">Top Scorers</h2>
+            <a href="{% url 'ppl3_rankings' %}#scorers"
+               class="text-blue-300 hover:text-yellow-300 text-sm font-semibold transition">
+              View All →
+            </a>
+          </div>
+
+          <div class="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-xl">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-blue-200/80 border-b border-white/10">
+                  <th class="px-3 py-2 text-left">#</th>
+                  <th class="px-3 py-2 text-left">Player</th>
+                  <th class="px-3 py-2 text-center">Goals</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for stat in top_scorers %}
+                <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                  <td class="px-3 py-2 text-blue-200">{{ forloop.counter }}</td>
+                  <td class="px-3 py-2 font-semibold">{{ stat.player.gamertag }}</td>
+                  <td class="px-3 py-2 text-center font-bold text-yellow-300">{{ stat.goals }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="3" class="px-3 py-6 text-center text-blue-200/70">No goals yet.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Top Assisters -->
+        <div>
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-yellow-300">Top Assisters</h2>
+            <a href="{% url 'ppl3_rankings' %}#assisters"
+               class="text-blue-300 hover:text-yellow-300 text-sm font-semibold transition">
+              View All →
+            </a>
+          </div>
+
+          <div class="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-xl">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-blue-200/80 border-b border-white/10">
+                  <th class="px-3 py-2 text-left">#</th>
+                  <th class="px-3 py-2 text-left">Player</th>
+                  <th class="px-3 py-2 text-center">Assists</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for stat in top_assisters %}
+                <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                  <td class="px-3 py-2 text-blue-200">{{ forloop.counter }}</td>
+                  <td class="px-3 py-2 font-semibold">{{ stat.player.gamertag }}</td>
+                  <td class="px-3 py-2 text-center font-bold text-blue-300">{{ stat.assists }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="3" class="px-3 py-6 text-center text-blue-200/70">No assists yet.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
     <!-- KNOCKOUT PREVIEW -->
     <section>
       <h2 class="text-2xl font-bold mb-4 text-yellow-300">Knockout Rounds</h2>
