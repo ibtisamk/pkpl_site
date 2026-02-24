@@ -291,13 +291,25 @@ class GroupMatchAdmin(admin.ModelAdmin):
 
     def save_related(self, request, form, formsets, change):
         """
-        Save related objects and trigger efficient stats rebuild.
+        Skip signal during formset save to prevent timeout.
         """
-        super().save_related(request, form, formsets, change)
+        obj = form.instance
+        obj._skip_rebuild_signal = True
+        
+        try:
+            super().save_related(request, form, formsets, change)
+        finally:
+            if hasattr(obj, '_skip_rebuild_signal'):
+                del obj._skip_rebuild_signal
     
     def save_model(self, request, obj, form, change):
-        """Save the match."""
-        super().save_model(request, obj, form, change)
+        """Save the match and skip signal."""
+        obj._skip_rebuild_signal = True
+        try:
+            super().save_model(request, obj, form, change)
+        finally:
+            if hasattr(obj, '_skip_rebuild_signal'):
+                del obj._skip_rebuild_signal
 
     # Removed formfield_for_manytomany override; not needed for custom Group model
 

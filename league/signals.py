@@ -228,8 +228,10 @@ def rebuild_player_season_stats(player_obj, season_obj):
     season_stats, _ = PlayerSeasonStats.objects.get_or_create(
         player=player_obj,
         season=season_obj,
-        club=player_obj.club,
-        manual=False,
+        defaults={
+            'club': player_obj.club,
+            'manual': False,
+        }
     )
 
     season_stats.goals = total_goals
@@ -237,6 +239,7 @@ def rebuild_player_season_stats(player_obj, season_obj):
     season_stats.appearances = total_appearances
     season_stats.clean_sheets = total_clean_sheets
     season_stats.rating = avg_rating
+    season_stats.club = player_obj.club  # Update club in case player transferred
     season_stats.save()
 
 
