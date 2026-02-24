@@ -22,6 +22,9 @@ class Command(BaseCommand):
 
         qs = PlayerMatchStats.objects.select_related(
             'player', 'fixture', 'group_match__fixture', 'knockout_match__round__season'
+        ).only(
+            'id', 'player_id', 'group_match_id', 'knockout_match_id', 'fixture_id',
+            'goals', 'assists', 'rating', 'man_of_the_match'
         )
 
         pairs = set()
