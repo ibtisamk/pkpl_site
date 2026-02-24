@@ -223,6 +223,13 @@ class Fixture(models.Model):
     week_number = models.IntegerField(blank=True, null=True)
     group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True, blank=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['season', 'date']),
+            models.Index(fields=['season', 'week_number']),
+            models.Index(fields=['season', 'group']),
+        ]
+
     def save(self, *args, create_match=True, **kwargs):
         super().save(*args, **kwargs)
         if create_match:
@@ -367,6 +374,14 @@ class PlayerMatchStats(models.Model):
     rating = models.FloatField(default=0)
     man_of_the_match = models.BooleanField(default=False)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['player', 'group_match']),
+            models.Index(fields=['player', 'knockout_match']),
+            models.Index(fields=['group_match', 'rating']),
+            models.Index(fields=['man_of_the_match']),
+        ]
+
     def __str__(self):
         return f"{self.player.gamertag} - Match Stats"
 
@@ -389,6 +404,12 @@ class PlayerSeasonStats(models.Model):
 
     class Meta:
         unique_together = ('player', 'season')
+        indexes = [
+            models.Index(fields=['season', 'player']),
+            models.Index(fields=['season', '-rating', '-goals', '-assists']),
+            models.Index(fields=['season', '-goals', '-assists']),
+            models.Index(fields=['season', 'appearances']),
+        ]
 
     def __str__(self):
         return f"{self.player} - {self.season}"
@@ -424,6 +445,12 @@ class TeamSeasonStats(models.Model):
         null=True,
         blank=True
     )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['season', 'team']),
+            models.Index(fields=['season', '-points', '-goal_difference', '-goals_for']),
+        ]
 
     def __str__(self):
         return f"{self.team.name} - {self.season.name}"

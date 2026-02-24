@@ -19,6 +19,7 @@ from .models import (
     Fixture,
     GroupMatch,
     KnockoutRound,
+    KnockoutMatch,
     POSITIONS
 )
 
@@ -160,23 +161,43 @@ def team_detail(request, club_id):
             "finish": row.finish_position if row else None,
         })
 
-    players = Player.objects.filter(club=club).order_by("position")
-    squad_rows = []
+    # Optimize: Prefetch all season stats and match stats in advance
+    from django.db.models import Avg
+    players = Player.objects.filter(club=club).order_by("position").prefetch_related(
+        'season_stats',
+        'match_stats__group_match__fixture'
+    )
+    
+    # Pre-fetch all season stats and match stats to avoid N+1
+    all_player_stats = PlayerSeasonStats.objects.filter(
+        player__in=players
+    ).select_related('season', 'player')
+    
+    stats_by_player_season = {}
+    for stat in all_player_stats:
+        key = (stat.player_id, stat.season_id)
+        stats_by_player_season[key] = stat
+    
+    # Pre-calculate average ratings per player per season
+    from django.db.models import Avg
+    avg_ratings = PlayerMatchStats.objects.filter(
+        player__in=players,
+        rating__gt=0
+    ).values('player_id', 'group_match__fixture__season_id').annotate(
+        avg_rating=Avg('rating')
+    )
+    
+    ratings_dict = {}
+    for item in avg_ratings:
+        key = (item['player_id'], item['group_match__fixture__season_id'])
+        ratings_dict[key] = round(item['avg_rating'], 2)
 
+    squad_rows = []
     for player in players:
         per_season = []
         for season in seasons:
-            stat = PlayerSeasonStats.objects.filter(player=player, season=season).first()
-
-            match_stats = PlayerMatchStats.objects.filter(
-                player=player,
-                group_match__fixture__season=season
-            )
-            avg_rating = None
-            if match_stats.exists():
-                avg_rating = round(
-                    sum(ms.rating for ms in match_stats) / match_stats.count(), 2
-                )
+            stat = stats_by_player_season.get((player.id, season.id))
+            avg_rating = ratings_dict.get((player.id, season.id))
 
             per_season.append({
                 "season": season,
@@ -197,7 +218,7 @@ def team_detail(request, club_id):
         "groups": [],
     }
 
-    finishes = TeamSeasonStats.objects.filter(team=club)
+    finishes = TeamSeasonStats.objects.filter(team=club).select_related('season')
     for s in finishes:
         if s.finish_position:
             achievements[s.finish_position].append(s.season.name)
@@ -218,20 +239,29 @@ def player_detail(request, player_id):
     player = get_object_or_404(Player, id=player_id)
     seasons = Season.objects.all().order_by("id")
 
+    # Optimize: Pre-fetch all stats for this player
+    all_stats = PlayerSeasonStats.objects.filter(
+        player=player
+    ).select_related('season')
+    stats_by_season = {stat.season_id: stat for stat in all_stats}
+    
+    # Optimize: Use database aggregation for average ratings
+    from django.db.models import Avg
+    avg_ratings_qs = PlayerMatchStats.objects.filter(
+        player=player,
+        rating__gt=0
+    ).values('group_match__fixture__season_id').annotate(
+        avg_rating=Avg('rating')
+    )
+    avg_ratings_dict = {
+        item['group_match__fixture__season_id']: round(item['avg_rating'], 2)
+        for item in avg_ratings_qs
+    }
+
     season_rows = []
-
     for season in seasons:
-        stat = PlayerSeasonStats.objects.filter(player=player, season=season).first()
-
-        match_stats = PlayerMatchStats.objects.filter(
-            player=player,
-            group_match__fixture__season=season
-        )
-        avg_rating = None
-        if match_stats.exists():
-            avg_rating = round(
-                sum(ms.rating for ms in match_stats) / match_stats.count(), 2
-            )
+        stat = stats_by_season.get(season.id)
+        avg_rating = avg_ratings_dict.get(season.id)
 
         season_rows.append({
             "season": season,
@@ -239,28 +269,31 @@ def player_detail(request, player_id):
             "avg_rating": avg_rating,
         })
 
+    # Optimize: Pre-fetch awards
     awards = []
-    for season in seasons:
-        try:
-            award = getattr(season, 'awards', None)
-            if award:
-                titles = []
-                # Check each award individually
-                if award.mvp_id and award.mvp_id == player.id:
-                    titles.append("MVP")
-                if award.top_scorer_id and award.top_scorer_id == player.id:
-                    titles.append("Top Scorer")
-                if award.top_assister_id and award.top_assister_id == player.id:
-                    titles.append("Top Assister")
-                if award.best_defender_id and award.best_defender_id == player.id:
-                    titles.append("Best Defender")
-                if award.best_midfielder_id and award.best_midfielder_id == player.id:
-                    titles.append("Best Midfielder")
+    try:
+        from .models import SeasonAwards
+        all_awards = SeasonAwards.objects.filter(
+            season__in=seasons
+        ).select_related('season')
+        
+        for award in all_awards:
+            titles = []
+            if award.mvp_id and award.mvp_id == player.id:
+                titles.append("MVP")
+            if award.top_scorer_id and award.top_scorer_id == player.id:
+                titles.append("Top Scorer")
+            if award.top_assister_id and award.top_assister_id == player.id:
+                titles.append("Top Assister")
+            if award.best_defender_id and award.best_defender_id == player.id:
+                titles.append("Best Defender")
+            if award.best_midfielder_id and award.best_midfielder_id == player.id:
+                titles.append("Best Midfielder")
 
-                if titles:
-                    awards.append({"season": season.name, "titles": titles})
-        except Exception:
-            pass
+            if titles:
+                awards.append({"season": award.season.name, "titles": titles})
+    except Exception:
+        pass
 
     return render(request, "league/player_detail.html", {
         "player": player,
@@ -273,81 +306,78 @@ def player_detail(request, player_id):
 # ALL PLAYERS PAGE
 # ---------------------------------------------------------
 def all_players(request):
-    from django.db.models import Prefetch, Sum, Avg, Count, Q
-    from collections import defaultdict
+    from django.db.models import Sum, Avg, Count, Q, Case, When, IntegerField
     
-    # Fetch all players with their clubs
+    # Fetch all players with their clubs in one query
     players = Player.objects.select_related("club").all().order_by("gamertag")
     
-    # Fetch all player stats in one query
-    all_stats = PlayerSeasonStats.objects.select_related('season').all()
-    stats_by_player = defaultdict(list)
-    for stat in all_stats:
-        stats_by_player[stat.player_id].append(stat)
+    # Aggregate all stats per player in ONE query
+    player_aggregates = PlayerSeasonStats.objects.values('player_id').annotate(
+        total_apps=Sum('appearances'),
+        total_goals=Sum('goals'),
+        total_assists=Sum('assists'),
+        total_clean_sheets=Sum('clean_sheets')
+    )
+    aggregates_dict = {item['player_id']: item for item in player_aggregates}
     
-    # Fetch all match stats for calculating AMR and MOTM
-    all_match_stats = PlayerMatchStats.objects.all()
-    match_stats_by_player = defaultdict(list)
-    for ms in all_match_stats:
-        match_stats_by_player[ms.player_id].append(ms)
+    # Calculate average ratings and MOTM counts in ONE query
+    match_aggregates = PlayerMatchStats.objects.filter(
+        rating__gt=0
+    ).values('player_id').annotate(
+        avg_rating=Avg('rating'),
+        motm_count=Count('id', filter=Q(man_of_the_match=True))
+    )
+    match_dict = {item['player_id']: item for item in match_aggregates}
     
     # Fetch all season awards in one query
     try:
         from .models import SeasonAwards
         all_awards = SeasonAwards.objects.select_related('season').all()
-        awards_by_season = {award.season_id: award for award in all_awards}
     except:
-        awards_by_season = {}
+        all_awards = []
     
+    # Build awards lookup by player
+    awards_by_player = {}
+    for award in all_awards:
+        for field_name, label in [
+            ('mvp_id', 'MVP'),
+            ('top_scorer_id', 'Top Scorer'),
+            ('top_assister_id', 'Top Assister'),
+            ('best_defender_id', 'Best Defender'),
+            ('best_midfielder_id', 'Best Midfielder')
+        ]:
+            player_id = getattr(award, field_name, None)
+            if player_id:
+                if player_id not in awards_by_player:
+                    awards_by_player[player_id] = []
+                awards_by_player[player_id].append(f"{label} ({award.season.name})")
+    
+    # Build player data list
     player_data = []
     for player in players:
-        total_apps = 0
-        total_goals = 0
-        total_assists = 0
-        total_clean_sheets = 0
-        awards = []
+        # Get aggregated stats
+        agg = aggregates_dict.get(player.id, {})
+        match_agg = match_dict.get(player.id, {})
         
-        # Sum up stats from all seasons
-        for stat in stats_by_player.get(player.id, []):
-            total_apps += stat.appearances
-            total_goals += stat.goals
-            total_assists += stat.assists
-            total_clean_sheets += stat.clean_sheets
-        
-        # Calculate average match rating and MOTM count
-        player_match_stats = match_stats_by_player.get(player.id, [])
-        avg_rating = None
-        motm_count = 0
-        if player_match_stats:
-            ratings = [ms.rating for ms in player_match_stats if ms.rating and ms.rating > 0]
-            if ratings:
-                avg_rating = round(sum(ratings) / len(ratings), 2)
-            motm_count = sum(1 for ms in player_match_stats if ms.man_of_the_match)
-        
-        # Check awards for ALL seasons (not just seasons with stats)
-        for season_id, award in awards_by_season.items():
-            if award.mvp_id and award.mvp_id == player.id:
-                awards.append(f"MVP ({award.season.name})")
-            if award.top_scorer_id and award.top_scorer_id == player.id:
-                awards.append(f"Top Scorer ({award.season.name})")
-            if award.top_assister_id and award.top_assister_id == player.id:
-                awards.append(f"Top Assister ({award.season.name})")
-            if award.best_defender_id and award.best_defender_id == player.id:
-                awards.append(f"Best Defender ({award.season.name})")
-            if award.best_midfielder_id and award.best_midfielder_id == player.id:
-                awards.append(f"Best Midfielder ({award.season.name})")
+        avg_rating = match_agg.get('avg_rating')
+        if avg_rating:
+            avg_rating = round(avg_rating, 2)
         
         player_data.append({
             "player": player,
             "club": player.club.name if player.club else "Free Agent",
-            "apps": total_apps,
-            "goals": total_goals,
-            "assists": total_assists,
-            "clean_sheets": total_clean_sheets,
+            "apps": agg.get('total_apps', 0),
+            "goals": agg.get('total_goals', 0),
+            "assists": agg.get('total_assists', 0),
+            "clean_sheets": agg.get('total_clean_sheets', 0),
             "avg_rating": avg_rating,
-            "motm_count": motm_count,
-            "awards": awards,
+            "motm_count": match_agg.get('motm_count', 0),
+            "awards": awards_by_player.get(player.id, []),
         })
+    
+    return render(request, "league/all_players.html", {
+        "player_data": player_data,
+    })
     
     return render(request, "league/all_players.html", {
         "player_data": player_data,
@@ -365,7 +395,9 @@ def ppl3_overview(request):
     # -----------------------------
     # GROUPS + STANDINGS
     # -----------------------------
-    groups = season.groups.all().prefetch_related("members__club")
+    groups = season.groups.prefetch_related(
+        'members__club'
+    ).all()
 
     group_data = []
     for group in groups:
@@ -373,6 +405,7 @@ def ppl3_overview(request):
         standings = (
             TeamSeasonStats.objects
             .filter(season=season, team__in=clubs)
+            .select_related('team')
             .order_by("-points", "-goal_difference", "-goals_for")
         )
         group_data.append({
@@ -383,13 +416,12 @@ def ppl3_overview(request):
     # -----------------------------
     # UPCOMING FIXTURES (SNAPSHOT)
     # -----------------------------
-    # Show a snapshot of the next upcoming (unplayed) fixtures for the season.
-    # Include fixtures that don't have an associated GroupMatch (e.g. knockout fixtures)
     fixtures = (
         Fixture.objects
         .filter(season=season)
         .filter(Q(group_match__is_played=False) | Q(group_match__isnull=True))
-        .order_by("date")[:10]  # Show next 10 fixtures
+        .select_related('home_club', 'away_club', 'group_match')
+        .order_by("date")[:10]
     )
 
     # All results: include played group fixtures and played knockout matches
@@ -397,6 +429,7 @@ def ppl3_overview(request):
     played_fixtures = (
         Fixture.objects
         .filter(season=season, group_match__is_played=True)
+        .select_related('home_club', 'away_club', 'group_match')
         .order_by("-date")
     )
     for f in played_fixtures:
@@ -412,7 +445,10 @@ def ppl3_overview(request):
     # include knockout match results
     kms = []
     try:
-        kms = list(KnockoutRound.objects.filter(season=season))
+        kms = list(KnockoutRound.objects.filter(season=season).prefetch_related(
+            'matches__home_club',
+            'matches__away_club'
+        ))
         round_order = {"R16": 0, "QF": 1, "SF": 2, "F": 3, "3P": 4}
         kms = sorted(kms, key=lambda r: round_order.get(r.round_type, 99))
     except Exception:
@@ -431,7 +467,10 @@ def ppl3_overview(request):
     # -----------------------------
     # KNOCKOUT ROUNDS + MATCHES
     # -----------------------------
-    rounds_qs = list(KnockoutRound.objects.filter(season=season))
+    rounds_qs = list(KnockoutRound.objects.filter(season=season).prefetch_related(
+        'matches__home_club',
+        'matches__away_club'
+    ))
     round_order = {"R16": 0, "QF": 1, "SF": 2, "F": 3, "3P": 4}
     rounds = sorted(rounds_qs, key=lambda r: round_order.get(r.round_type, 99))
 
@@ -495,7 +534,7 @@ def ppl3_overview(request):
     top_players = (
         PlayerSeasonStats.objects
         .filter(season=season, appearances__gte=1)
-        .select_related('player', 'club')
+        .select_related('player', 'club', 'player__club')
         .order_by('-rating', '-goals', '-assists')[:10]
     )
 
@@ -505,14 +544,14 @@ def ppl3_overview(request):
     top_scorers = (
         PlayerSeasonStats.objects
         .filter(season=season, goals__gt=0)
-        .select_related('player', 'club')
+        .select_related('player', 'club', 'player__club')
         .order_by('-goals', '-assists', '-rating')[:5]
     )
 
     top_assisters = (
         PlayerSeasonStats.objects
         .filter(season=season, assists__gt=0)
-        .select_related('player', 'club')
+        .select_related('player', 'club', 'player__club')
         .order_by('-assists', '-goals', '-rating')[:5]
     )
 
@@ -619,12 +658,24 @@ def ppl3_rankings(request):
 def upcoming_fixtures(request):
     fixtures = Fixture.objects.filter(
         Q(group_match__is_played=False) | Q(group_match__isnull=True)
+    ).select_related(
+        'home_club',
+        'away_club',
+        'group',
+        'group_match'
     ).order_by("-date", "id")
     return render(request, "fixtures/upcoming.html", {"fixtures": fixtures})
 
 
 def results(request):
-    fixtures = Fixture.objects.filter(group_match__is_played=True).order_by("-date")
+    fixtures = Fixture.objects.filter(
+        group_match__is_played=True
+    ).select_related(
+        'home_club',
+        'away_club',
+        'group',
+        'group_match'
+    ).order_by("-date")
     return render(request, "fixtures/results.html", {"fixtures": fixtures})
 
 
@@ -636,7 +687,7 @@ def ppl3_groups(request):
     if not season:
         return render(request, "league/ppl3/groups.html", {"season": None})
 
-    groups = season.groups.all().prefetch_related("members__club")
+    groups = season.groups.prefetch_related('members__club').all()
 
     group_data = []
     for group in groups:
@@ -644,6 +695,7 @@ def ppl3_groups(request):
         standings = (
             TeamSeasonStats.objects
             .filter(season=season, team__in=clubs)
+            .select_related('team')
             .order_by("-points", "-goal_difference", "-goals_for")
         )
         group_data.append({
@@ -668,6 +720,7 @@ def ppl3_fixtures(request):
     group_fixtures = (
         Fixture.objects
         .filter(season=season, group__isnull=False)
+        .select_related('home_club', 'away_club', 'group', 'group_match')
         .order_by("week_number", "date")
     )
 
@@ -675,6 +728,7 @@ def ppl3_fixtures(request):
     knockout_fixtures = (
         Fixture.objects
         .filter(season=season, group__isnull=True)
+        .select_related('home_club', 'away_club', 'group_match')
         .order_by('date')
     )
 
@@ -693,7 +747,10 @@ def ppl3_knockouts(request):
     if not season:
         return render(request, "league/ppl3/knockouts.html", {"season": None})
 
-    rounds = KnockoutRound.objects.filter(season=season).order_by("id")
+    rounds = KnockoutRound.objects.filter(season=season).prefetch_related(
+        'matches__home_club',
+        'matches__away_club'
+    ).order_by("id")
 
     knockout_data = []
     for rnd in rounds:
@@ -709,7 +766,7 @@ def ppl3_knockouts(request):
             # Find all fixtures for this tie (both directions)
             fixtures = Fixture.objects.filter(season=season, group__isnull=True).filter(
                 Q(home_club=km.home_club, away_club=km.away_club) | Q(home_club=km.away_club, away_club=km.home_club)
-            ).order_by('date')
+            ).select_related('home_club', 'away_club', 'group_match').order_by('date')
 
             for f in fixtures:
                 if hasattr(f, 'group_match'):
@@ -751,16 +808,30 @@ def ppl3_knockouts(request):
 # ---------------------------------------------------------
 def ppl3_match_detail(request, match_id):
     # Try GroupMatch first, then KnockoutMatch
-    match = GroupMatch.objects.filter(id=match_id).first()
+    match = GroupMatch.objects.filter(id=match_id).select_related(
+        'fixture__home_club',
+        'fixture__away_club',
+        'fixture__season'
+    ).first()
     if match:
-        stats = PlayerMatchStats.objects.filter(group_match=match).select_related("player")
+        stats = PlayerMatchStats.objects.filter(group_match=match).select_related(
+            "player",
+            "player__club"
+        ).order_by('-rating', '-goals', '-assists')
         return render(request, "league/ppl3/match_detail.html", {"match": match, "stats": stats})
 
     # Fallback to KnockoutMatch
     from .models import KnockoutMatch
-    km = KnockoutMatch.objects.filter(id=match_id).first()
+    km = KnockoutMatch.objects.filter(id=match_id).select_related(
+        'home_club',
+        'away_club',
+        'round__season'
+    ).first()
     if km:
-        stats = PlayerMatchStats.objects.filter(knockout_match=km).select_related("player")
+        stats = PlayerMatchStats.objects.filter(knockout_match=km).select_related(
+            "player",
+            "player__club"
+        ).order_by('-rating', '-goals', '-assists')
         return render(request, "league/ppl3/match_detail.html", {"match": km, "stats": stats})
 
     return render(request, "league/404.html", status=404)
@@ -773,17 +844,19 @@ def ppl3_team(request, club_id):
     club = get_object_or_404(Club, id=club_id)
     season = Season.objects.filter(is_active=True).first()
 
-    stats = TeamSeasonStats.objects.filter(team=club, season=season).first()
+    stats = TeamSeasonStats.objects.filter(team=club, season=season).select_related('season').first()
 
     fixture_qs = (
-        Fixture.objects.filter(season=season, home_club=club) |
-        Fixture.objects.filter(season=season, away_club=club)
+        Fixture.objects.filter(season=season, home_club=club).select_related('home_club', 'away_club', 'group_match') |
+        Fixture.objects.filter(season=season, away_club=club).select_related('home_club', 'away_club', 'group_match')
     )
 
     # Also include knockout matches where this club appears
     km_list = []
     try:
-        km_list = list(KnockoutMatch.objects.filter(round__season=season).filter(Q(home_club=club) | Q(away_club=club)))
+        km_list = list(KnockoutMatch.objects.filter(round__season=season).filter(
+            Q(home_club=club) | Q(away_club=club)
+        ).select_related('home_club', 'away_club', 'round'))
     except Exception:
         km_list = []
 
@@ -807,19 +880,33 @@ def ppl3_team(request, club_id):
 # PLAYER PAGE
 # ---------------------------------------------------------
 def ppl3_player(request, player_id):
-    player = get_object_or_404(Player, id=player_id)
+    from django.db.models import Count
+    
+    player = get_object_or_404(Player.objects.select_related('club'), id=player_id)
     season = Season.objects.filter(is_active=True).first()
 
-    stats = PlayerSeasonStats.objects.filter(player=player, season=season).first()
+    stats = PlayerSeasonStats.objects.filter(
+        player=player, 
+        season=season
+    ).select_related('season', 'club').first()
+    
     match_stats = PlayerMatchStats.objects.filter(
         player=player
     ).filter(
         Q(group_match__fixture__season=season) |
         Q(knockout_match__round__season=season) |
         Q(fixture__season=season)
-    ).select_related("group_match__fixture", "knockout_match__round", "fixture")
+    ).select_related(
+        "group_match__fixture__home_club",
+        "group_match__fixture__away_club",
+        "knockout_match__round",
+        "knockout_match__home_club",
+        "knockout_match__away_club",
+        "fixture__home_club",
+        "fixture__away_club"
+    ).order_by('-rating', '-goals')
     
-    # Count MOTM awards for this season
+    # Count MOTM awards for this season using database aggregation
     motm_count = match_stats.filter(man_of_the_match=True).count()
 
     return render(request, "league/ppl3/player.html", {
