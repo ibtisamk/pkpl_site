@@ -229,7 +229,10 @@ def rebuild_player_season_stats(player_obj, season_obj):
         except Exception:
             pass
 
-    season_stats, _ = PlayerSeasonStats.objects.get_or_create(
+    season_stats, _ = PlayerSeasonStats.objects.only(
+        'id', 'player_id', 'season_id', 'club_id', 'manual', 
+        'goals', 'assists', 'appearances', 'clean_sheets', 'rating', 'minutes_played'
+    ).get_or_create(
         player=player_obj,
         season=season_obj,
         defaults={
