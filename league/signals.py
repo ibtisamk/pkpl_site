@@ -160,6 +160,7 @@ def rebuild_player_season_stats(player_obj, season_obj):
     avg_rating = agg_stats['avg_rating'] or 0
     
     # For appearances and clean sheets, we need to iterate (but with optimized query)
+    # Use .only() to avoid querying position_played for backwards compatibility
     pms_qs = pms_qs.select_related(
         'group_match',
         'knockout_match', 
@@ -169,6 +170,9 @@ def rebuild_player_season_stats(player_obj, season_obj):
         'group_match__away_players',
         'knockout_match__home_players',
         'knockout_match__away_players'
+    ).only(
+        'id', 'player_id', 'group_match_id', 'knockout_match_id', 'fixture_id',
+        'goals', 'assists', 'minutes_played', 'rating', 'man_of_the_match'
     )
 
     total_appearances = 0
