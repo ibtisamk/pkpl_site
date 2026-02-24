@@ -34,7 +34,10 @@ from .models import (
     TeamRegistration,
     TeamRegistrationPlayer,
     PlayerRegistration,
+    TeamOfTheWeek,
+    TeamOfTheWeekSelection,
     REGIONS,
+    MATCH_POSITIONS,
 )
 
 
@@ -219,7 +222,7 @@ class PlayerMatchStatsGroupInline(admin.TabularInline):
     model = PlayerMatchStats
     fk_name = 'group_match'
     extra = 0
-    fields = ('player', 'goals', 'assists', 'minutes_played', 'rating', 'man_of_the_match')
+    fields = ('player', 'position_played', 'goals', 'assists', 'minutes_played', 'rating', 'man_of_the_match')
     autocomplete_fields = ['player']
 
     def get_queryset(self, request):
@@ -229,7 +232,7 @@ class PlayerMatchStatsKnockoutInline(admin.TabularInline):
     model = PlayerMatchStats
     fk_name = 'knockout_match'
     extra = 0
-    fields = ('player', 'goals', 'assists', 'minutes_played', 'rating', 'man_of_the_match')
+    fields = ('player', 'position_played', 'goals', 'assists', 'minutes_played', 'rating', 'man_of_the_match')
     autocomplete_fields = ['player']
 
     def get_queryset(self, request):
@@ -709,3 +712,127 @@ class KnockoutMatchAdmin(admin.ModelAdmin):
                 pass
 
         return super().formfield_for_manytomany(db_field, request, **kwargs)
+
+
+# ============================================================
+# TEAM OF THE WEEK
+# ============================================================
+
+class TeamOfTheWeekSelectionInline(admin.TabularInline):
+    model = TeamOfTheWeekSelection
+    extra = 0
+    autocomplete_fields = ['player']
+    fields = ('player', 'position', 'games_played', 'goals', 'assists', 'clean_sheets', 'avg_rating', 'lineup_position')
+    readonly_fields = ('games_played', 'goals', 'assists', 'clean_sheets', 'avg_rating')
+
+
+@admin.action(description="Generate TOTW automatically")
+def action_generate_totw(modeladmin, request, queryset):
+    """Auto-generate Team of the Week selections based on player performance"""
+    from django.db.models import Avg, Sum, Count, Q
+    from datetime import datetime
+    
+    for totw in queryset:
+        if totw.selections.exists():
+            messages.warning(request, f"{totw} already has selections. Skipping.")
+            continue
+        
+        # Get all matches in the date range
+        matches_q = Q(fixture__season=totw.season, is_played=True)
+        if totw.start_date and totw.end_date:
+            matches_q &= Q(fixture__date__range=[totw.start_date, totw.end_date])
+        
+        group_matches = GroupMatch.objects.filter(matches_q).select_related('fixture')
+        
+        # Also check knockout matches if applicable
+        ko_matches_q = Q(round__season=totw.season, is_played=True)
+        if totw.week_type == 'KO':
+            knockout_matches = KnockoutMatch.objects.filter(ko_matches_q)
+        else:
+            knockout_matches = KnockoutMatch.objects.none()
+        
+        # Get all player stats from these matches
+        match_stats_qs = PlayerMatchStats.objects.filter(
+            Q(group_match__in=group_matches) | Q(knockout_match__in=knockout_matches)
+        ).filter(
+            position_played__isnull=False  # Only include players with position recorded
+        )
+        
+        # Aggregate stats by player and position
+        player_stats = match_stats_qs.values('player_id', 'position_played').annotate(
+            games=Count('id'),
+            avg_rating=Avg('rating'),
+            total_goals=Sum('goals'),
+            total_assists=Sum('assists'),
+            motm_count=Count('id', filter=Q(man_of_the_match=True))
+        ).filter(
+            games__gte=2  # Minimum 2 games played in period
+        )
+        
+        # Position quotas
+        position_quotas = {
+            'GK': 1,
+            'DEF': 4,
+            'MID': 3,
+            'ATT': 3,
+        }
+        
+        selections_created = 0
+        lineup_pos = 1
+        
+        for position, quota in position_quotas.items():
+            # Get top players for this position
+            top_players = player_stats.filter(
+                position_played=position
+            ).order_by('-avg_rating', '-total_goals', '-total_assists')[:quota]
+            
+            for stat in top_players:
+                try:
+                    player = Player.objects.get(id=stat['player_id'])
+                    
+                    TeamOfTheWeekSelection.objects.create(
+                        totw=totw,
+                        player=player,
+                        position=position,
+                        games_played=stat['games'],
+                        goals=stat['total_goals'] or 0,
+                        assists=stat['total_assists'] or 0,
+                        avg_rating=round(stat['avg_rating'], 2),
+                        lineup_position=lineup_pos
+                    )
+                    selections_created += 1
+                    lineup_pos += 1
+                except Player.DoesNotExist:
+                    continue
+        
+        messages.success(request, f"Generated {selections_created} selections for {totw}")
+
+
+@admin.register(TeamOfTheWeek)
+class TeamOfTheWeekAdmin(admin.ModelAdmin):
+    list_display = ('title', 'season', 'week_type', 'week_number', 'is_published', 'start_date', 'end_date')
+    list_filter = ('season', 'week_type', 'is_published')
+    search_fields = ('season__name',)
+    inlines = [TeamOfTheWeekSelectionInline]
+    actions = [action_generate_totw]
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('season', 'week_number', 'week_type')
+        }),
+        ('Date Range', {
+            'fields': ('start_date', 'end_date'),
+            'description': 'Specify the date range for this TOTW (used for auto-generation)'
+        }),
+        ('Publishing', {
+            'fields': ('is_published',)
+        }),
+    )
+
+
+@admin.register(TeamOfTheWeekSelection)
+class TeamOfTheWeekSelectionAdmin(admin.ModelAdmin):
+    list_display = ('player', 'totw', 'position', 'games_played', 'goals', 'assists', 'avg_rating')
+    list_filter = ('totw__season', 'totw__week_type', 'position')
+    search_fields = ('player__gamertag', 'totw__season__name')
+    autocomplete_fields = ['player', 'totw']

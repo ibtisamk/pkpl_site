@@ -42,17 +42,33 @@ def generate_group_fixtures(group, repeats: int):
 
 
 POSITIONS = [
-    ("ST", "ST"),
-    ("LW", "LW / LM"),
-    ("RW", "RW / RM"),
-    ("CM", "CM"),
-    ("CDM", "CDM"),
-    ("CAM", "CAM"),
-    ("LB", "LB"),
-    ("CB", "CB"),
-    ("RB", "RB"),
-    ("GK", "GK"),
-    ("ANY", "ANY"),
+    ("ST", "Striker"),
+    ("LW", "Left Wing"),
+    ("RW", "Right Wing"),
+    ("CM", "Central Midfielder"),
+    ("CDM", "Defensive Midfielder"),
+    ("CAM", "Attacking Midfielder"),
+    ("LB", "Left Back"),
+    ("CB", "Centre Back"),
+    ("RB", "Right Back"),
+    ("GK", "Goalkeeper"),
+    ("ANY", "Any Position"),
+]
+
+# Map positions to broader categories for TOTW
+POSITION_CATEGORIES = {
+    'ST': 'ATT', 'LW': 'ATT', 'RW': 'ATT',
+    'CAM': 'MID', 'CM': 'MID', 'CDM': 'MID',
+    'LB': 'DEF', 'CB': 'DEF', 'RB': 'DEF',
+    'GK': 'GK',
+    'ANY': 'ANY',
+}
+
+MATCH_POSITIONS = [
+    ('ATT', 'Attacker'),
+    ('MID', 'Midfielder'),
+    ('DEF', 'Defender'),
+    ('GK', 'Goalkeeper'),
 ]
 
 PLATFORMS = [
@@ -373,6 +389,15 @@ class PlayerMatchStats(models.Model):
     minutes_played = models.IntegerField(default=0)
     rating = models.FloatField(default=0)
     man_of_the_match = models.BooleanField(default=False)
+    
+    # Position played in this specific match
+    position_played = models.CharField(
+        max_length=3,
+        choices=MATCH_POSITIONS,
+        null=True,
+        blank=True,
+        help_text="Position played in this match (for TOTW selection)"
+    )
 
     class Meta:
         indexes = [
@@ -380,6 +405,7 @@ class PlayerMatchStats(models.Model):
             models.Index(fields=['player', 'knockout_match']),
             models.Index(fields=['group_match', 'rating']),
             models.Index(fields=['man_of_the_match']),
+            models.Index(fields=['position_played', '-rating']),
         ]
 
     def __str__(self):
@@ -399,6 +425,12 @@ class PlayerSeasonStats(models.Model):
     clean_sheets = models.IntegerField(default=0)
     appearances = models.IntegerField(default=0)
     rating = models.FloatField(default=0)
+    
+    # Weighted rating (Bayesian average) for fair rankings
+    skill_rating = models.FloatField(
+        default=0,
+        help_text="Weighted average rating accounting for games played"
+    )
 
     manual = models.BooleanField(default=False)
 
@@ -407,9 +439,26 @@ class PlayerSeasonStats(models.Model):
         indexes = [
             models.Index(fields=['season', 'player']),
             models.Index(fields=['season', '-rating', '-goals', '-assists']),
+            models.Index(fields=['season', '-skill_rating']),
             models.Index(fields=['season', '-goals', '-assists']),
             models.Index(fields=['season', 'appearances']),
         ]
+    
+    def calculate_skill_rating(self, league_avg=7.0, min_games=5):
+        """Calculate Bayesian weighted average rating"""
+        if self.appearances == 0:
+            self.skill_rating = 0
+        else:
+            self.skill_rating = (
+                (league_avg * min_games) + (self.rating * self.appearances)
+            ) / (min_games + self.appearances)
+        return self.skill_rating
+    
+    def save(self, *args, **kwargs):
+        # Auto-calculate skill rating on save
+        if self.rating > 0:
+            self.calculate_skill_rating()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.player} - {self.season}"
@@ -543,3 +592,93 @@ class SeasonAwards(models.Model):
 
     def __str__(self):
         return f"Awards for {self.season}"
+
+
+# -------------------------
+#  TEAM OF THE WEEK
+# -------------------------
+class TeamOfTheWeek(models.Model):
+    """Represents a Team of the Week event for a specific period"""
+    WEEK_TYPES = [
+        ('GW', 'Gameweek'),
+        ('KO', 'Knockout Stage'),
+        ('TOTS', 'Team of the Season'),
+    ]
+    
+    season = models.ForeignKey(Season, on_delete=models.CASCADE, related_name='team_of_weeks')
+    week_number = models.IntegerField(help_text="Week number (1, 2, 3, etc.)")
+    week_type = models.CharField(max_length=4, choices=WEEK_TYPES, default='GW')
+    
+    # Date range for this TOTW
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    
+    # Publishing status
+    is_published = models.BooleanField(
+        default=False,
+        help_text="Make this TOTW visible on the website"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('season', 'week_number', 'week_type')
+        ordering = ['-season__year', 'week_type', 'week_number']
+        indexes = [
+            models.Index(fields=['season', 'week_type', 'week_number']),
+            models.Index(fields=['is_published', '-created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.season.name} - {self.get_week_type_display()} {self.week_number}"
+    
+    @property
+    def title(self):
+        if self.week_type == 'TOTS':
+            return f"Team of the Season - {self.season.name}"
+        elif self.week_type == 'KO':
+            return f"Knockout Stage TOTW - {self.season.name}"
+        return f"Gameweek {self.week_number} TOTW"
+
+
+class TeamOfTheWeekSelection(models.Model):
+    """Individual player selection in a Team of the Week"""
+    totw = models.ForeignKey(
+        TeamOfTheWeek,
+        on_delete=models.CASCADE,
+        related_name='selections'
+    )
+    player = models.ForeignKey(
+        Player,
+        on_delete=models.CASCADE,
+        related_name='totw_selections'
+    )
+    position = models.CharField(
+        max_length=3,
+        choices=MATCH_POSITIONS,
+        help_text="Position for this TOTW selection"
+    )
+    
+    # Stats for this specific period
+    games_played = models.IntegerField(default=0)
+    goals = models.IntegerField(default=0)
+    assists = models.IntegerField(default=0)
+    clean_sheets = models.IntegerField(default=0)
+    avg_rating = models.FloatField(default=0)
+    
+    # Display order (1-11 for starting XI)
+    lineup_position = models.IntegerField(
+        default=0,
+        help_text="Position in lineup for display (1-11)"
+    )
+    
+    class Meta:
+        unique_together = ('totw', 'player')
+        ordering = ['lineup_position']
+        indexes = [
+            models.Index(fields=['totw', 'position']),
+            models.Index(fields=['player', '-avg_rating']),
+        ]
+    
+    def __str__(self):
+        return f"{self.player.gamertag} - {self.totw} ({self.get_position_display()})"

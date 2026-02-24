@@ -20,6 +20,8 @@ from .models import (
     GroupMatch,
     KnockoutRound,
     KnockoutMatch,
+    TeamOfTheWeek,
+    TeamOfTheWeekSelection,
     POSITIONS
 )
 
@@ -533,9 +535,9 @@ def ppl3_overview(request):
     # -----------------------------
     top_players = (
         PlayerSeasonStats.objects
-        .filter(season=season, appearances__gte=1)
+        .filter(season=season, appearances__gte=3)
         .select_related('player', 'club', 'player__club')
-        .order_by('-rating', '-goals', '-assists')[:10]
+        .order_by('-skill_rating', '-rating', '-goals', '-assists')[:10]
     )
 
     # -----------------------------
@@ -545,14 +547,14 @@ def ppl3_overview(request):
         PlayerSeasonStats.objects
         .filter(season=season, goals__gt=0)
         .select_related('player', 'club', 'player__club')
-        .order_by('-goals', '-assists', '-rating')[:5]
+        .order_by('-goals', '-assists', '-skill_rating')[:5]
     )
 
     top_assisters = (
         PlayerSeasonStats.objects
         .filter(season=season, assists__gt=0)
         .select_related('player', 'club', 'player__club')
-        .order_by('-assists', '-goals', '-rating')[:5]
+        .order_by('-assists', '-goals', '-skill_rating')[:5]
     )
 
     return render(request, "league/ppl3/overview.html", {
@@ -578,6 +580,7 @@ def ppl3_rankings(request):
     # Get filter parameters
     position_filter = request.GET.get('position', 'all')
     gameweek_filter = request.GET.get('gameweek', 'all')
+    qualified_only = request.GET.get('qualified', 'false') == 'true'
 
     # Base queryset
     players_qs = (
@@ -585,11 +588,16 @@ def ppl3_rankings(request):
         .filter(season=season, appearances__gte=1)
         .select_related('player', 'club', 'player__club')
     )
+    
+    # Apply qualified filter (minimum 30% of games)
+    min_qualified_games = 5  # Roughly 20% of 26 games
+    if qualified_only:
+        players_qs = players_qs.filter(appearances__gte=min_qualified_games)
 
     # Apply position filter
     position_map = {
         'attackers': ['ST', 'LW', 'RW'],
-        'midfielders': ['CM', 'CDM', 'CAM', 'LW', 'RW'],
+        'midfielders': ['CM', 'CDM', 'CAM'],
         'defenders': ['LB', 'CB', 'RB'],
         'goalkeepers': ['GK'],
     }
@@ -607,8 +615,8 @@ def ppl3_rankings(request):
         except ValueError:
             pass
 
-    # Order by rating, then goals, then assists
-    players = players_qs.order_by('-rating', '-goals', '-assists')
+    # Order by skill rating (weighted average), then goals, then assists
+    players = players_qs.order_by('-skill_rating', '-rating', '-goals', '-assists')
 
     # Position tabs for template
     positions = [
@@ -633,14 +641,14 @@ def ppl3_rankings(request):
         PlayerSeasonStats.objects
         .filter(season=season, goals__gt=0)
         .select_related('player', 'club')
-        .order_by('-goals', '-assists', '-rating')
+        .order_by('-goals', '-assists', '-skill_rating')
     )
 
     top_assisters = (
         PlayerSeasonStats.objects
         .filter(season=season, assists__gt=0)
         .select_related('player', 'club')
-        .order_by('-assists', '-goals', '-rating')
+        .order_by('-assists', '-goals', '-skill_rating')
     )
 
     return render(request, "league/ppl3/rankings.html", {
@@ -650,6 +658,8 @@ def ppl3_rankings(request):
         "current_position": position_filter,
         "gameweeks": gameweeks,
         "current_gameweek": gameweek_filter,
+        "qualified_only": qualified_only,
+        "min_qualified_games": min_qualified_games,
         "top_scorers": top_scorers,
         "top_assisters": top_assisters,
     })
@@ -915,5 +925,55 @@ def ppl3_player(request, player_id):
         "stats": stats,
         "match_stats": match_stats,
         "motm_count": motm_count,
+    })
+
+
+# ---------------------------------------------------------
+# TEAM OF THE WEEK VIEWS
+# ---------------------------------------------------------
+def totw_list(request):
+    """List all Team of the Week selections"""
+    season = Season.objects.filter(is_active=True).first()
+    
+    totws = TeamOfTheWeek.objects.filter(
+        is_published=True
+    ).select_related('season').prefetch_related(
+        'selections__player',
+        'selections__player__club'
+    ).order_by('-season__year', 'week_type', '-week_number')
+    
+    if season:
+        totws = totws.filter(season=season)
+    
+    return render(request, "league/ppl3/totw_list.html", {
+        "season": season,
+        "totws": totws,
+    })
+
+
+def totw_detail(request, totw_id):
+    """Display a specific Team of the Week"""
+    totw = get_object_or_404(
+        TeamOfTheWeek.objects.prefetch_related(
+            'selections__player__club'
+        ),
+        id=totw_id,
+        is_published=True
+    )
+    
+    # Group selections by position for display
+    selections_by_position = {
+        'GK': [],
+        'DEF': [],
+        'MID': [],
+        'ATT': [],
+    }
+    
+    for selection in totw.selections.all():
+        selections_by_position[selection.position].append(selection)
+    
+    return render(request, "league/ppl3/totw_detail.html", {
+        "totw": totw,
+        "selections_by_position": selections_by_position,
     })
 
