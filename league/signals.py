@@ -229,17 +229,19 @@ def rebuild_player_season_stats(player_obj, season_obj):
         except Exception:
             pass
 
-    season_stats, _ = PlayerSeasonStats.objects.only(
-        'id', 'player_id', 'season_id', 'club_id', 'manual', 
-        'goals', 'assists', 'appearances', 'clean_sheets', 'rating', 'minutes_played'
-    ).get_or_create(
-        player=player_obj,
-        season=season_obj,
-        defaults={
-            'club': player_obj.club,
-            'manual': False,
-        }
-    )
+    # Use defer to avoid querying new fields that may not exist yet during migrations
+    try:
+        season_stats = PlayerSeasonStats.objects.defer('skill_rating').get(
+            player=player_obj,
+            season=season_obj
+        )
+    except PlayerSeasonStats.DoesNotExist:
+        season_stats = PlayerSeasonStats(
+            player=player_obj,
+            season=season_obj,
+            club=player_obj.club,
+            manual=False
+        )
 
     season_stats.goals = total_goals
     season_stats.assists = total_assists
@@ -247,7 +249,13 @@ def rebuild_player_season_stats(player_obj, season_obj):
     season_stats.clean_sheets = total_clean_sheets
     season_stats.rating = avg_rating
     season_stats.club = player_obj.club  # Update club in case player transferred
-    season_stats.save()
+    
+    # Use update_fields to avoid touching skill_rating if it doesn't exist yet
+    try:
+        season_stats.save(update_fields=['goals', 'assists', 'appearances', 'clean_sheets', 'rating', 'club', 'minutes_played'])
+    except Exception:
+        # Fallback for initial creation or if update_fields fails
+        season_stats.save()
 
 
 # When deleting a Season we want to avoid triggering rebuilds that recreate
