@@ -455,9 +455,13 @@ class PlayerSeasonStats(models.Model):
         return self.skill_rating
     
     def save(self, *args, **kwargs):
-        # Auto-calculate skill rating on save
+        # Auto-calculate skill rating on save (if field exists)
         if self.rating > 0:
-            self.calculate_skill_rating()
+            try:
+                self.calculate_skill_rating()
+            except AttributeError:
+                # Field doesn't exist yet during migrations
+                pass
         super().save(*args, **kwargs)
 
     def __str__(self):

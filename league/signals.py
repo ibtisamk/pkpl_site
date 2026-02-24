@@ -252,7 +252,7 @@ def rebuild_player_season_stats(player_obj, season_obj):
     
     # Use update_fields to avoid touching skill_rating if it doesn't exist yet
     try:
-        season_stats.save(update_fields=['goals', 'assists', 'appearances', 'clean_sheets', 'rating', 'club', 'minutes_played'])
+        season_stats.save(update_fields=['goals', 'assists', 'appearances', 'clean_sheets', 'rating', 'club'])
     except Exception:
         # Fallback for initial creation or if update_fields fails
         season_stats.save()
