@@ -6,7 +6,12 @@ class Command(BaseCommand):
     help = "Recalculate skill_rating for all PlayerSeasonStats"
 
     def handle(self, *args, **options):
-        stats = PlayerSeasonStats.objects.all()
+        # Use defer to avoid querying skill_rating if it doesn't exist yet
+        try:
+            stats = PlayerSeasonStats.objects.defer('skill_rating').all()
+        except Exception:
+            stats = PlayerSeasonStats.objects.all()
+        
         count = stats.count()
         
         self.stdout.write(f"Recalculating skill_rating for {count} player season stats...")
