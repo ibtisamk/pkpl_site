@@ -836,3 +836,8 @@ class TeamOfTheWeekSelectionAdmin(admin.ModelAdmin):
     list_filter = ('totw__season', 'totw__week_type', 'position')
     search_fields = ('player__gamertag', 'totw__season__name')
     autocomplete_fields = ['player', 'totw']
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        # Optimize with select_related to avoid N+1 queries
+        return qs.select_related('player', 'totw', 'totw__season')
