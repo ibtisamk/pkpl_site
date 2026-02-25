@@ -246,7 +246,15 @@ class PlayerMatchStatsKnockoutInline(admin.TabularInline):
 @admin.register(GroupMatch)
 class GroupMatchAdmin(admin.ModelAdmin):
     list_display = ('fixture', 'home_goals', 'away_goals', 'is_played')
-    list_filter = ('fixture__season', 'is_played')
+    list_filter = (
+        'fixture__season',
+        'is_played',
+        'fixture__home_club',
+        'fixture__away_club',
+        'fixture__week_number',
+        'fixture__group',
+        'fixture__date',
+    )
     inlines = [PlayerMatchStatsGroupInline]
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
