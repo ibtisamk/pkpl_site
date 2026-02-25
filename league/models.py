@@ -445,19 +445,88 @@ class PlayerSeasonStats(models.Model):
             models.Index(fields=['season', 'appearances']),
         ]
     
-    def calculate_skill_rating(self, league_avg=7.0, min_games=5):
-        """Calculate Bayesian weighted average rating"""
+    def _get_contribution_points_per_match(self):
+        """
+        Calculate contribution points based on position-weighted scoring.
+        Returns average contribution points per match.
+        """
         if self.appearances == 0:
-            self.skill_rating = 0
+            return 0.0
+        
+        # Get player position from Player model
+        position = self.player.position if self.player else 'ANY'
+        
+        # Determine position category
+        attackers = ['ST', 'LW', 'RW']
+        midfielders = ['CAM', 'CM']
+        defenders = ['LB', 'CB', 'RB']
+        goalkeepers = ['GK']
+        
+        # Calculate base contribution points
+        total_points = 0.0
+        
+        if position in attackers:
+            # Attackers: Goal=5, Assist=3
+            total_points = (self.goals * 5) + (self.assists * 3)
+            max_per_match = 15
+            
+        elif position in midfielders:
+            # Midfielders: Goal=5, Assist=3
+            total_points = (self.goals * 5) + (self.assists * 3)
+            max_per_match = 12
+            
+        elif position in defenders:
+            # Defenders: Goal=6, Assist=5, Clean Sheet=3
+            total_points = (self.goals * 6) + (self.assists * 5) + (self.clean_sheets * 3)
+            max_per_match = 10
+            
+        elif position in goalkeepers:
+            # Goalkeepers: Clean Sheet=3
+            total_points = self.clean_sheets * 3
+            max_per_match = 8
+            
         else:
-            self.skill_rating = (
-                (league_avg * min_games) + (self.rating * self.appearances)
-            ) / (min_games + self.appearances)
+            # Others (CDM, etc.): Clean Sheet=2
+            total_points = (self.goals * 5) + (self.assists * 3) + (self.clean_sheets * 2)
+            max_per_match = 12
+        
+        # Apply per-match cap
+        max_total_allowed = max_per_match * self.appearances
+        total_points = min(total_points, max_total_allowed)
+        
+        # Return average per match
+        return total_points / self.appearances
+    
+    def calculate_skill_rating(self):
+        """
+        Calculate weighted skill rating combining match rating and contribution score.
+        
+        Formula:
+        - Match Rating Weight: 70%
+        - Contribution Score Weight: 30%
+        - SkillRating = (0.7 * AvgMatchRating) + (0.3 * ContributionScore)
+        
+        Contribution scoring is position-based with per-match caps to prevent stat padding.
+        """
+        if self.appearances == 0:
+            self.skill_rating = 0.0
+            return self.skill_rating
+        
+        # 70% weight: Average Match Rating
+        match_rating_component = 0.7 * self.rating
+        
+        # 30% weight: Contribution Score
+        contribution_score = self._get_contribution_points_per_match()
+        contribution_component = 0.3 * contribution_score
+        
+        # Final weighted skill rating
+        self.skill_rating = match_rating_component + contribution_component
+        
         return self.skill_rating
     
     def save(self, *args, **kwargs):
         # Auto-calculate skill rating on save
-        if self.rating > 0:
+        if self.rating > 0 or self.appearances > 0:
             try:
                 self.calculate_skill_rating()
             except Exception:
