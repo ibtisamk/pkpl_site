@@ -29,6 +29,37 @@ from django.db.models import Q
 from django.utils import timezone
 
 
+# Helper to check if skill_rating field exists (for backwards compatibility during migrations)
+def _has_skill_rating():
+    """Check if skill_rating field exists in PlayerSeasonStats"""
+    try:
+        from django.db import connection
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name='league_playerseasonstats' AND column_name='skill_rating'
+            """)
+            return cursor.fetchone() is not None
+    except Exception:
+        return False
+
+
+# Cache the result since it won't change during runtime
+_SKILL_RATING_EXISTS = None
+
+def _get_order_by_with_skill_rating(primary='-skill_rating', fallback='-rating'):
+    """Return ordering list that uses skill_rating if it exists, otherwise fallback"""
+    global _SKILL_RATING_EXISTS
+    if _SKILL_RATING_EXISTS is None:
+        _SKILL_RATING_EXISTS = _has_skill_rating()
+    
+    if _SKILL_RATING_EXISTS:
+        return [primary, fallback, '-goals', '-assists']
+    else:
+        return [fallback, '-goals', '-assists']
+
+
 # ---------------------------------------------------------
 # TEAM REGISTRATION
 # ---------------------------------------------------------
@@ -537,7 +568,7 @@ def ppl3_overview(request):
         PlayerSeasonStats.objects
         .filter(season=season, appearances__gte=3)
         .select_related('player', 'club', 'player__club')
-        .order_by('-skill_rating', '-rating', '-goals', '-assists')[:10]
+        .order_by(*_get_order_by_with_skill_rating())[:10]
     )
 
     # -----------------------------
@@ -547,14 +578,14 @@ def ppl3_overview(request):
         PlayerSeasonStats.objects
         .filter(season=season, goals__gt=0)
         .select_related('player', 'club', 'player__club')
-        .order_by('-goals', '-assists', '-skill_rating')[:5]
+        .order_by('-goals', '-assists', *(_get_order_by_with_skill_rating('-skill_rating', '-rating') if _SKILL_RATING_EXISTS else ['-rating']))[:5]
     )
 
     top_assisters = (
         PlayerSeasonStats.objects
         .filter(season=season, assists__gt=0)
         .select_related('player', 'club', 'player__club')
-        .order_by('-assists', '-goals', '-skill_rating')[:5]
+        .order_by('-assists', '-goals', *(_get_order_by_with_skill_rating('-skill_rating', '-rating') if _SKILL_RATING_EXISTS else ['-rating']))[:5]
     )
 
     return render(request, "league/ppl3/overview.html", {
@@ -616,7 +647,7 @@ def ppl3_rankings(request):
             pass
 
     # Order by skill rating (weighted average), then goals, then assists
-    players = players_qs.order_by('-skill_rating', '-rating', '-goals', '-assists')
+    players = players_qs.order_by(*_get_order_by_with_skill_rating())
 
     # Position tabs for template
     positions = [
@@ -641,14 +672,14 @@ def ppl3_rankings(request):
         PlayerSeasonStats.objects
         .filter(season=season, goals__gt=0)
         .select_related('player', 'club')
-        .order_by('-goals', '-assists', '-skill_rating')
+        .order_by('-goals', '-assists', *(_get_order_by_with_skill_rating('-skill_rating', '-rating') if _SKILL_RATING_EXISTS else ['-rating']))
     )
 
     top_assisters = (
         PlayerSeasonStats.objects
         .filter(season=season, assists__gt=0)
         .select_related('player', 'club')
-        .order_by('-assists', '-goals', '-skill_rating')
+        .order_by('-assists', '-goals', *(_get_order_by_with_skill_rating('-skill_rating', '-rating') if _SKILL_RATING_EXISTS else ['-rating']))
     )
 
     return render(request, "league/ppl3/rankings.html", {
