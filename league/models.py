@@ -459,8 +459,6 @@ class PlayerSeasonStats(models.Model):
         # Don't calculate/save skill_rating if it causes errors
         # This handles backwards compatibility during deployment
         super().save(*args, **kwargs)
-            else:
-                raise
 
     def __str__(self):
         return f"{self.player} - {self.season}"
