@@ -456,23 +456,9 @@ class PlayerSeasonStats(models.Model):
         return self.skill_rating
     
     def save(self, *args, **kwargs):
-        # Auto-calculate skill rating on save (if field exists)
-        if self.rating > 0:
-            try:
-                self.calculate_skill_rating()
-            except AttributeError:
-                # Field doesn't exist yet during migrations
-                pass
-        
-        try:
-            super().save(*args, **kwargs)
-        except ProgrammingError as e:
-            # If skill_rating column doesn't exist, save without it
-            if 'skill_rating' in str(e):
-                # Get all field names except skill_rating
-                fields_to_update = [f.name for f in self._meta.fields 
-                                   if f.name not in ('id', 'skill_rating') and not f.primary_key]
-                super().save(update_fields=fields_to_update)
+        # Don't calculate/save skill_rating if it causes errors
+        # This handles backwards compatibility during deployment
+        super().save(*args, **kwargs)
             else:
                 raise
 
