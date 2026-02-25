@@ -453,8 +453,11 @@ class PlayerSeasonStats(models.Model):
         if self.appearances == 0:
             return 0.0
         
-        # Get player position from Player model
-        position = self.player.position if self.player else 'ANY'
+        # Get player position from Player model (with safety check)
+        try:
+            position = self.player.position if self.player else 'ANY'
+        except Exception:
+            position = 'ANY'
         
         # Determine position category
         attackers = ['ST', 'LW', 'RW']
