@@ -285,6 +285,27 @@ class GroupMatch(models.Model):
 
     class Meta:
         pass
+    
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        
+        # Auto-populate players from clubs when first created
+        if is_new:
+            try:
+                home_club = self.fixture.home_club
+                away_club = self.fixture.away_club
+                
+                # Add all players from home club
+                home_club_players = home_club.players.all()
+                self.home_players.set(home_club_players)
+                
+                # Add all players from away club
+                away_club_players = away_club.players.all()
+                self.away_players.set(away_club_players)
+            except Exception:
+                # Silently fail if clubs don't have players yet
+                pass
 
     def __str__(self):
         return f"{self.fixture} ({self.home_goals}-{self.away_goals})"
@@ -387,8 +408,8 @@ class PlayerMatchStats(models.Model):
 
     goals = models.IntegerField(default=0)
     assists = models.IntegerField(default=0)
-    minutes_played = models.IntegerField(default=0)
-    rating = models.FloatField(default=0)
+    minutes_played = models.IntegerField(default=90)
+    rating = models.FloatField(default=6.0)
     man_of_the_match = models.BooleanField(default=False)
     
     # Position played in this specific match
@@ -640,6 +661,24 @@ class KnockoutMatch(models.Model):
         related_name='away_knockout_matches',
         blank=True,
     )
+    
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        
+        # Auto-populate players from clubs when first created
+        if is_new and self.home_club and self.away_club:
+            try:
+                # Add all players from home club
+                home_club_players = self.home_club.players.all()
+                self.home_players.set(home_club_players)
+                
+                # Add all players from away club
+                away_club_players = self.away_club.players.all()
+                self.away_players.set(away_club_players)
+            except Exception:
+                # Silently fail if clubs don't have players yet
+                pass
 
     def __str__(self):
         home = self.home_club.name if self.home_club else self.home_placeholder
