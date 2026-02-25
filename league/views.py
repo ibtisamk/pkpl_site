@@ -30,17 +30,6 @@ from django.utils import timezone
 from django.db.utils import ProgrammingError
 
 
-# Helper to safely order by skill_rating with fallback
-def _safe_order_by(queryset, *order_fields):
-    """Try to order by skill_rating, fall back to rating if column doesn't exist"""
-    try:
-        return queryset.order_by(*order_fields)
-    except ProgrammingError:
-        # skill_rating column doesn't exist, use fallback
-        fallback_fields = [f.replace('skill_rating', 'rating') for f in order_fields]
-        return queryset.order_by(*fallback_fields)
-
-
 # ---------------------------------------------------------
 # TEAM REGISTRATION
 # ---------------------------------------------------------
@@ -545,29 +534,56 @@ def ppl3_overview(request):
     # -----------------------------
     # TOP 10 PLAYERS SNAPSHOT
     # -----------------------------
-    top_players_qs = (
-        PlayerSeasonStats.objects
-        .filter(season=season, appearances__gte=3)
-        .select_related('player', 'club', 'player__club')
-    )
-    top_players = _safe_order_by(top_players_qs, '-skill_rating', '-rating', '-goals', '-assists')[:10]
+    try:
+        top_players = (
+            PlayerSeasonStats.objects
+            .filter(season=season, appearances__gte=3)
+            .select_related('player', 'club', 'player__club')
+            .order_by('-skill_rating', '-rating', '-goals', '-assists')[:10]
+        )
+        list(top_players)  # Force evaluation to catch error
+    except ProgrammingError:
+        top_players = (
+            PlayerSeasonStats.objects
+            .filter(season=season, appearances__gte=3)
+            .select_related('player', 'club', 'player__club')
+            .order_by('-rating', '-goals', '-assists')[:10]
+        )
 
     # -----------------------------
     # TOP 5 SCORERS & ASSISTERS
     # -----------------------------
-    top_scorers_qs = (
-        PlayerSeasonStats.objects
-        .filter(season=season, goals__gt=0)
-        .select_related('player', 'club', 'player__club')
-    )
-    top_scorers = _safe_order_by(top_scorers_qs, '-goals', '-assists', '-skill_rating')[:5]
+    try:
+        top_scorers = (
+            PlayerSeasonStats.objects
+            .filter(season=season, goals__gt=0)
+            .select_related('player', 'club', 'player__club')
+            .order_by('-goals', '-assists', '-skill_rating')[:5]
+        )
+        list(top_scorers)  # Force evaluation
+    except ProgrammingError:
+        top_scorers = (
+            PlayerSeasonStats.objects
+            .filter(season=season, goals__gt=0)
+            .select_related('player', 'club', 'player__club')
+            .order_by('-goals', '-assists', '-rating')[:5]
+        )
 
-    top_assisters_qs = (
-        PlayerSeasonStats.objects
-        .filter(season=season, assists__gt=0)
-        .select_related('player', 'club', 'player__club')
-    )
-    top_assisters = _safe_order_by(top_assisters_qs, '-assists', '-goals', '-skill_rating')[:5]
+    try:
+        top_assisters = (
+            PlayerSeasonStats.objects
+            .filter(season=season, assists__gt=0)
+            .select_related('player', 'club', 'player__club')
+            .order_by('-assists', '-goals', '-skill_rating')[:5]
+        )
+        list(top_assisters)  # Force evaluation
+    except ProgrammingError:
+        top_assisters = (
+            PlayerSeasonStats.objects
+            .filter(season=season, assists__gt=0)
+            .select_related('player', 'club', 'player__club')
+            .order_by('-assists', '-goals', '-rating')[:5]
+        )
 
     return render(request, "league/ppl3/overview.html", {
         "season": season,
@@ -628,7 +644,11 @@ def ppl3_rankings(request):
             pass
 
     # Order by skill rating (weighted average), then goals, then assists
-    players = _safe_order_by(players_qs, '-skill_rating', '-rating', '-goals', '-assists')
+    try:
+        players = players_qs.order_by('-skill_rating', '-rating', '-goals', '-assists')
+        list(players[:1])  # Force evaluation with minimal cost
+    except ProgrammingError:
+        players = players_qs.order_by('-rating', '-goals', '-assists')
 
     # Position tabs for template
     positions = [
@@ -649,19 +669,37 @@ def ppl3_rankings(request):
     )
 
     # Top scorers and assisters (full lists)
-    top_scorers_qs = (
-        PlayerSeasonStats.objects
-        .filter(season=season, goals__gt=0)
-        .select_related('player', 'club')
-    )
-    top_scorers = _safe_order_by(top_scorers_qs, '-goals', '-assists', '-skill_rating')
+    try:
+        top_scorers = (
+            PlayerSeasonStats.objects
+            .filter(season=season, goals__gt=0)
+            .select_related('player', 'club')
+            .order_by('-goals', '-assists', '-skill_rating')
+        )
+        list(top_scorers[:1])  # Force evaluation
+    except ProgrammingError:
+        top_scorers = (
+            PlayerSeasonStats.objects
+            .filter(season=season, goals__gt=0)
+            .select_related('player', 'club')
+            .order_by('-goals', '-assists', '-rating')
+        )
 
-    top_assisters_qs = (
-        PlayerSeasonStats.objects
-        .filter(season=season, assists__gt=0)
-        .select_related('player', 'club')
-    )
-    top_assisters = _safe_order_by(top_assisters_qs, '-assists', '-goals', '-skill_rating')
+    try:
+        top_assisters = (
+            PlayerSeasonStats.objects
+            .filter(season=season, assists__gt=0)
+            .select_related('player', 'club')
+            .order_by('-assists', '-goals', '-skill_rating')
+        )
+        list(top_assisters[:1])  # Force evaluation
+    except ProgrammingError:
+        top_assisters = (
+            PlayerSeasonStats.objects
+            .filter(season=season, assists__gt=0)
+            .select_related('player', 'club')
+            .order_by('-assists', '-goals', '-rating')
+        )
 
     return render(request, "league/ppl3/rankings.html", {
         "season": season,
