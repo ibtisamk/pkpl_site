@@ -172,9 +172,15 @@ def team_detail(request, club_id):
     )
     
     # Pre-fetch all season stats and match stats to avoid N+1
-    all_player_stats = PlayerSeasonStats.objects.filter(
-        player__in=players
-    ).select_related('season', 'player')
+    try:
+        all_player_stats = PlayerSeasonStats.objects.filter(
+            player__in=players
+        ).select_related('season', 'player')
+        list(all_player_stats[:1])  # Force eval to check if skill_rating exists
+    except ProgrammingError:
+        all_player_stats = PlayerSeasonStats.objects.filter(
+            player__in=players
+        ).select_related('season', 'player').defer('skill_rating')
     
     stats_by_player_season = {}
     for stat in all_player_stats:
@@ -243,9 +249,15 @@ def player_detail(request, player_id):
     seasons = Season.objects.all().order_by("id")
 
     # Optimize: Pre-fetch all stats for this player
-    all_stats = PlayerSeasonStats.objects.filter(
-        player=player
-    ).select_related('season')
+    try:
+        all_stats = PlayerSeasonStats.objects.filter(
+            player=player
+        ).select_related('season')
+        list(all_stats[:1])
+    except ProgrammingError:
+        all_stats = PlayerSeasonStats.objects.filter(
+            player=player
+        ).select_related('season').defer('skill_rating')
     stats_by_season = {stat.season_id: stat for stat in all_stats}
     
     # Optimize: Use database aggregation for average ratings
@@ -547,6 +559,7 @@ def ppl3_overview(request):
             PlayerSeasonStats.objects
             .filter(season=season, appearances__gte=3)
             .select_related('player', 'club', 'player__club')
+            .defer('skill_rating')
             .order_by('-rating', '-goals', '-assists')[:10]
         )
 
@@ -566,6 +579,7 @@ def ppl3_overview(request):
             PlayerSeasonStats.objects
             .filter(season=season, goals__gt=0)
             .select_related('player', 'club', 'player__club')
+            .defer('skill_rating')
             .order_by('-goals', '-assists', '-rating')[:5]
         )
 
@@ -582,6 +596,7 @@ def ppl3_overview(request):
             PlayerSeasonStats.objects
             .filter(season=season, assists__gt=0)
             .select_related('player', 'club', 'player__club')
+            .defer('skill_rating')
             .order_by('-assists', '-goals', '-rating')[:5]
         )
 
@@ -648,7 +663,7 @@ def ppl3_rankings(request):
         players = players_qs.order_by('-skill_rating', '-rating', '-goals', '-assists')
         list(players[:1])  # Force evaluation with minimal cost
     except ProgrammingError:
-        players = players_qs.order_by('-rating', '-goals', '-assists')
+        players = players_qs.defer('skill_rating').order_by('-rating', '-goals', '-assists')
 
     # Position tabs for template
     positions = [
@@ -682,6 +697,7 @@ def ppl3_rankings(request):
             PlayerSeasonStats.objects
             .filter(season=season, goals__gt=0)
             .select_related('player', 'club')
+            .defer('skill_rating')
             .order_by('-goals', '-assists', '-rating')
         )
 
@@ -698,6 +714,7 @@ def ppl3_rankings(request):
             PlayerSeasonStats.objects
             .filter(season=season, assists__gt=0)
             .select_related('player', 'club')
+            .defer('skill_rating')
             .order_by('-assists', '-goals', '-rating')
         )
 
