@@ -250,9 +250,8 @@ def rebuild_player_season_stats(player_obj, season_obj):
     season_stats.rating = avg_rating
     season_stats.club = player_obj.club  # Update club in case player transferred
     
-    # Save without skill_rating to avoid errors before migrations complete
-    # After migrations, run: python manage.py recalculate_skill_ratings
-    season_stats.save(update_fields=['goals', 'assists', 'appearances', 'clean_sheets', 'rating', 'club'])
+    # Save - skill_rating will be auto-calculated by the model's save() method
+    season_stats.save()
 
 
 # When deleting a Season we want to avoid triggering rebuilds that recreate

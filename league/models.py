@@ -456,8 +456,12 @@ class PlayerSeasonStats(models.Model):
         return self.skill_rating
     
     def save(self, *args, **kwargs):
-        # Don't calculate/save skill_rating if it causes errors
-        # This handles backwards compatibility during deployment
+        # Auto-calculate skill rating on save
+        if self.rating > 0:
+            try:
+                self.calculate_skill_rating()
+            except Exception:
+                pass
         super().save(*args, **kwargs)
 
     def __str__(self):
