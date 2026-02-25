@@ -31,8 +31,8 @@ railway run python manage.py recalculate_skill_ratings
 ## How Skill Rating Works (NEW FORMULA)
 
 ### Weighted Components:
-- **Match Rating (70%)** - Your average match performance rating
-- **Contribution Score (30%)** - Position-based scoring for goals, assists, clean sheets
+- **Match Rating (80%)** - Your average match performance rating (PRIMARY FACTOR)
+- **Contribution Score (20%)** - Position-based scoring for goals, assists, clean sheets
 
 ### Contribution Points by Position:
 
@@ -65,31 +65,31 @@ railway run python manage.py recalculate_skill_ratings
 ### Final Formula:
 ```
 Contribution Score = Total Contribution Points / Matches Played
-Skill Rating = (0.7 × Avg Match Rating) + (0.3 × Contribution Score)
+Skill Rating = (0.8 × Avg Match Rating) + (0.2 × Contribution Score)
 ```
 
 ### Examples:
 **Attacker with 8.5 rating, 10 goals, 5 assists in 10 games:**
-- Match Rating Component: 0.7 × 8.5 = 5.95
+- Match Rating Component: 0.8 × 8.5 = 6.80
 - Contribution Points: (10×5 + 5×3) / 10 = 6.5
-- Contribution Component: 0.3 × 6.5 = 1.95
-- **Skill Rating: 7.90**
+- Contribution Component: 0.2 × 6.5 = 1.30
+- **Skill Rating: 8.10**
 
 **Defender with 7.5 rating, 1 goal, 2 assists, 6 clean sheets in 10 games:**
-- Match Rating Component: 0.7 × 7.5 = 5.25
+- Match Rating Component: 0.8 × 7.5 = 6.00
 - Contribution Points: (1×6 + 2×5 + 6×3) / 10 = 3.4
-- Contribution Component: 0.3 × 3.4 = 1.02
-- **Skill Rating: 6.27**
+- Contribution Component: 0.2 × 3.4 = 0.68
+- **Skill Rating: 6.68**
 
 **Goalkeeper with 8.0 rating, 8 clean sheets in 10 games:**
-- Match Rating Component: 0.7 × 8.0 = 5.60
+- Match Rating Component: 0.8 × 8.0 = 6.40
 - Contribution Points: (8×3) / 10 = 2.4
-- Contribution Component: 0.3 × 2.4 = 0.72
-- **Skill Rating: 6.32**
+- Contribution Component: 0.2 × 2.4 = 0.48
+- **Skill Rating: 6.88**
 
 ## Why This System is Better
-✅ **Match rating is still king (70%)** - performance matters most  
-✅ **Rewards contributions (30%)** - goals, assists, clean sheets count  
+✅ **Match rating is king (80%)** - performance is the PRIMARY factor  
+✅ **Rewards contributions (20%)** - goals, assists, clean sheets still count  
 ✅ **Position-balanced** - defenders get more points for goals (harder to score)  
 ✅ **Anti-stat padding** - per-match caps prevent one big game from skewing stats  
 ✅ **Fair to all roles** - goalkeepers and defenders valued for their contributions  

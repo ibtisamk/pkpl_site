@@ -505,9 +505,9 @@ class PlayerSeasonStats(models.Model):
         Calculate weighted skill rating combining match rating and contribution score.
         
         Formula:
-        - Match Rating Weight: 70%
-        - Contribution Score Weight: 30%
-        - SkillRating = (0.7 * AvgMatchRating) + (0.3 * ContributionScore)
+        - Match Rating Weight: 80%
+        - Contribution Score Weight: 20%
+        - SkillRating = (0.8 * AvgMatchRating) + (0.2 * ContributionScore)
         
         Contribution scoring is position-based with per-match caps to prevent stat padding.
         """
@@ -515,12 +515,12 @@ class PlayerSeasonStats(models.Model):
             self.skill_rating = 0.0
             return self.skill_rating
         
-        # 70% weight: Average Match Rating
-        match_rating_component = 0.7 * self.rating
+        # 80% weight: Average Match Rating
+        match_rating_component = 0.8 * self.rating
         
-        # 30% weight: Contribution Score
+        # 20% weight: Contribution Score
         contribution_score = self._get_contribution_points_per_match()
-        contribution_component = 0.3 * contribution_score
+        contribution_component = 0.2 * contribution_score
         
         # Final weighted skill rating
         self.skill_rating = match_rating_component + contribution_component
