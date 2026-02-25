@@ -829,19 +829,37 @@ def action_generate_totw(modeladmin, request, queryset):
 
 @admin.register(TeamOfTheWeek)
 class TeamOfTheWeekAdmin(admin.ModelAdmin):
-    list_display = ('title', 'season', 'week_type', 'week_number', 'is_published', 'start_date', 'end_date')
+    list_display = ('title', 'season', 'totw_number', 'gameweek_range', 'week_type', 'is_published', 'date_range')
     list_filter = ('season', 'week_type', 'is_published')
     search_fields = ('season__name',)
     inlines = [TeamOfTheWeekSelectionInline]
     actions = [action_generate_totw]
     
+    def gameweek_range(self, obj):
+        if obj.start_gameweek and obj.end_gameweek:
+            if obj.start_gameweek == obj.end_gameweek:
+                return f"Week {obj.start_gameweek}"
+            return f"Weeks {obj.start_gameweek}-{obj.end_gameweek}"
+        return "-"
+    gameweek_range.short_description = "Gameweeks"
+    
+    def date_range(self, obj):
+        if obj.start_date and obj.end_date:
+            return f"{obj.start_date.strftime('%m/%d')} - {obj.end_date.strftime('%m/%d')}"
+        return "-"
+    date_range.short_description = "Date Range"
+    
     fieldsets = (
         ('Basic Information', {
-            'fields': ('season', 'week_number', 'week_type')
+            'fields': ('season', 'totw_number', 'week_type')
         }),
-        ('Date Range', {
+        ('Gameweek Coverage', {
+            'fields': ('start_gameweek', 'end_gameweek'),
+            'description': 'Specify which gameweeks are covered by this TOTW (e.g., 1-3, 4-5, etc.)'
+        }),
+        ('Date Range (for match filtering)', {
             'fields': ('start_date', 'end_date'),
-            'description': 'Specify the date range for this TOTW (used for auto-generation)'
+            'description': 'Matches between these dates will be included in TOTW generation'
         }),
         ('Publishing', {
             'fields': ('is_published',)

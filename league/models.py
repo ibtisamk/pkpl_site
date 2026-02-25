@@ -721,10 +721,34 @@ class TeamOfTheWeek(models.Model):
     ]
     
     season = models.ForeignKey(Season, on_delete=models.CASCADE, related_name='team_of_weeks')
-    week_number = models.IntegerField(help_text="Week number (1, 2, 3, etc.)")
+    
+    # TOTW numbering (TOTW #1, #2, #3, etc.)
+    totw_number = models.IntegerField(
+        help_text="TOTW number (1, 2, 3, etc.)",
+        default=1
+    )
+    
+    # Legacy field - kept for backwards compatibility
+    week_number = models.IntegerField(
+        help_text="Legacy field - use totw_number instead",
+        default=1
+    )
+    
     week_type = models.CharField(max_length=4, choices=WEEK_TYPES, default='GW')
     
-    # Date range for this TOTW
+    # Gameweek range covered by this TOTW
+    start_gameweek = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="First gameweek included (e.g., 1 for weeks 1-3)"
+    )
+    end_gameweek = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="Last gameweek included (e.g., 3 for weeks 1-3)"
+    )
+    
+    # Date range for this TOTW (used for match filtering)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     
@@ -737,23 +761,34 @@ class TeamOfTheWeek(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        unique_together = ('season', 'week_number', 'week_type')
-        ordering = ['-season__year', 'week_type', 'week_number']
+        unique_together = ('season', 'totw_number', 'week_type')
+        ordering = ['-season__year', 'week_type', 'totw_number']
         indexes = [
-            models.Index(fields=['season', 'week_type', 'week_number']),
+            models.Index(fields=['season', 'week_type', 'totw_number']),
             models.Index(fields=['is_published', '-created_at']),
         ]
     
     def __str__(self):
-        return f"{self.season.name} - {self.get_week_type_display()} {self.week_number}"
+        if self.start_gameweek and self.end_gameweek:
+            if self.start_gameweek == self.end_gameweek:
+                return f"{self.season.name} - {self.get_week_type_display()} {self.start_gameweek} (TOTW #{self.totw_number})"
+            return f"{self.season.name} - {self.get_week_type_display()}s {self.start_gameweek}-{self.end_gameweek} (TOTW #{self.totw_number})"
+        return f"{self.season.name} - {self.get_week_type_display()} (TOTW #{self.totw_number})"
     
     @property
     def title(self):
         if self.week_type == 'TOTS':
             return f"Team of the Season - {self.season.name}"
         elif self.week_type == 'KO':
-            return f"Knockout Stage TOTW - {self.season.name}"
-        return f"Gameweek {self.week_number} TOTW"
+            return f"Knockout Stage TOTW #{self.totw_number} - {self.season.name}"
+        
+        # Show gameweek range if available
+        if self.start_gameweek and self.end_gameweek:
+            if self.start_gameweek == self.end_gameweek:
+                return f"TOTW #{self.totw_number} - Gameweek {self.start_gameweek}"
+            return f"TOTW #{self.totw_number} - Gameweeks {self.start_gameweek}-{self.end_gameweek}"
+        
+        return f"TOTW #{self.totw_number}"
 
 
 class TeamOfTheWeekSelection(models.Model):
