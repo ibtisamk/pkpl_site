@@ -65,7 +65,8 @@
               <th class="px-4 py-3 text-center">Apps</th>
               <th class="px-4 py-3 text-center">Goals</th>
               <th class="px-4 py-3 text-center">Assists</th>
-              <th class="px-4 py-3 text-center">Rating</th>
+              <th class="px-4 py-3 text-center">Skill Rating</th>
+              <th class="px-4 py-3 text-center">Avg Rating</th>
             </tr>
           </thead>
           <tbody>
@@ -77,11 +78,12 @@
               <td class="px-4 py-3 text-center">{{ stat.appearances }}</td>
               <td class="px-4 py-3 text-center font-bold text-yellow-300">{{ stat.goals }}</td>
               <td class="px-4 py-3 text-center text-blue-300">{{ stat.assists }}</td>
-              <td class="px-4 py-3 text-center font-bold">{{ stat.rating|floatformat:2 }}</td>
+              <td class="px-4 py-3 text-center font-extrabold text-xl text-yellow-400">{{ stat.skill_rating|floatformat:2 }}</td>
+              <td class="px-4 py-3 text-center text-green-400">{{ stat.rating|floatformat:2 }}</td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="7" class="px-4 py-8 text-center text-blue-200/70">No player stats available yet.</td>
+              <td colspan="8" class="px-4 py-8 text-center text-blue-200/70">No player stats available yet.</td>
             </tr>
             {% endfor %}
           </tbody>

@@ -54,7 +54,8 @@
             <th class="px-4 py-3 text-center">Goals</th>
             <th class="px-4 py-3 text-center">Assists</th>
             <th class="px-4 py-3 text-center">Clean Sheets</th>
-            <th class="px-4 py-3 text-center">Rating</th>
+            <th class="px-4 py-3 text-center">Skill Rating</th>
+            <th class="px-4 py-3 text-center">Avg Rating</th>
           </tr>
         </thead>
         <tbody>
@@ -86,11 +87,12 @@
             <td class="px-4 py-3 text-center font-bold text-yellow-300">{{ stat.goals }}</td>
             <td class="px-4 py-3 text-center text-blue-300">{{ stat.assists }}</td>
             <td class="px-4 py-3 text-center">{{ stat.clean_sheets }}</td>
-            <td class="px-4 py-3 text-center font-bold text-green-400">{{ stat.rating|floatformat:2 }}</td>
+            <td class="px-4 py-3 text-center font-extrabold text-2xl text-yellow-400">{{ stat.skill_rating|floatformat:2 }}</td>
+            <td class="px-4 py-3 text-center text-green-400">{{ stat.rating|floatformat:2 }}</td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="9" class="px-4 py-12 text-center text-blue-200/70">
+            <td colspan="10" class="px-4 py-12 text-center text-blue-200/70">
               No player statistics available for this filter.
             </td>
           </tr>
