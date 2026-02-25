@@ -250,12 +250,9 @@ def rebuild_player_season_stats(player_obj, season_obj):
     season_stats.rating = avg_rating
     season_stats.club = player_obj.club  # Update club in case player transferred
     
-    # Use update_fields to avoid touching skill_rating if it doesn't exist yet
-    try:
-        season_stats.save(update_fields=['goals', 'assists', 'appearances', 'clean_sheets', 'rating', 'club'])
-    except Exception:
-        # Fallback for initial creation or if update_fields fails
-        season_stats.save()
+    # Save normally - the model's save() will calculate skill_rating
+    # The try/except in the model's save() handles backwards compatibility
+    season_stats.save()
 
 
 # When deleting a Season we want to avoid triggering rebuilds that recreate
