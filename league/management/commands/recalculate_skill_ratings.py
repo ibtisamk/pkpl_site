@@ -6,12 +6,21 @@ class Command(BaseCommand):
     help = "Recalculate skill_rating for all PlayerSeasonStats"
 
     def handle(self, *args, **options):
-        # Use defer to avoid querying skill_rating if it doesn't exist yet
-        try:
-            stats = PlayerSeasonStats.objects.defer('skill_rating').all()
-        except Exception:
-            stats = PlayerSeasonStats.objects.all()
+        # Check if skill_rating column exists before running
+        from django.db import connection
+        from django.db.utils import ProgrammingError
         
+        with connection.cursor() as cursor:
+            try:
+                cursor.execute("SELECT skill_rating FROM league_playerseasonstats LIMIT 0")
+            except ProgrammingError:
+                self.stdout.write(self.style.ERROR(
+                    "skill_rating column doesn't exist yet. "
+                    "Run migrations first: python manage.py migrate"
+                ))
+                return
+        
+        stats = PlayerSeasonStats.objects.all()
         count = stats.count()
         
         self.stdout.write(f"Recalculating skill_rating for {count} player season stats...")
@@ -21,7 +30,7 @@ class Command(BaseCommand):
             if stat.rating > 0:
                 try:
                     stat.calculate_skill_rating()
-                    stat.save()
+                    stat.save()  # This will work once column exists
                     updated += 1
                 except Exception as e:
                     self.stdout.write(self.style.WARNING(f"Failed to update {stat}: {e}"))
