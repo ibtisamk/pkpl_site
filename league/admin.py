@@ -354,6 +354,17 @@ class PlayerSeasonStatsAdmin(admin.ModelAdmin):
     list_filter = ('season', 'club', 'manual')
     search_fields = ('player__gamertag',)
     readonly_fields = ('amr',)
+    
+    def get_queryset(self, request):
+        from django.db.utils import ProgrammingError
+        qs = super().get_queryset(request)
+        try:
+            # Try to access queryset normally
+            list(qs[:1])
+            return qs
+        except ProgrammingError:
+            # skill_rating column doesn't exist yet
+            return qs.defer('skill_rating')
 
 
 # ============================================================
