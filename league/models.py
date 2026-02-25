@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.utils import ProgrammingError
 from django.utils import timezone
 from django.contrib import admin
 
@@ -462,7 +463,18 @@ class PlayerSeasonStats(models.Model):
             except AttributeError:
                 # Field doesn't exist yet during migrations
                 pass
-        super().save(*args, **kwargs)
+        
+        try:
+            super().save(*args, **kwargs)
+        except ProgrammingError as e:
+            # If skill_rating column doesn't exist, save without it
+            if 'skill_rating' in str(e):
+                # Get all field names except skill_rating
+                fields_to_update = [f.name for f in self._meta.fields 
+                                   if f.name not in ('id', 'skill_rating') and not f.primary_key]
+                super().save(update_fields=fields_to_update)
+            else:
+                raise
 
     def __str__(self):
         return f"{self.player} - {self.season}"
