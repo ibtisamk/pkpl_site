@@ -1082,6 +1082,8 @@ def player_stats_api(request, player_id):
             )
             
             return JsonResponse({
+                'name': player.gamertag,
+                'club': player.club.name if player.club else 'N/A',
                 'appearances': season_stats.appearances,
                 'goals': season_stats.goals,
                 'assists': season_stats.assists,
@@ -1091,6 +1093,8 @@ def player_stats_api(request, player_id):
             })
         except PlayerSeasonStats.DoesNotExist:
             return JsonResponse({
+                'name': player.gamertag,
+                'club': player.club.name if player.club else 'N/A',
                 'appearances': 0,
                 'goals': 0,
                 'assists': 0,
