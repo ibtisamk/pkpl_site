@@ -957,66 +957,37 @@ class TeamOfTheWeekSelectionAdmin(admin.ModelAdmin):
             if not active_season:
                 return super().formfield_for_foreignkey(db_field, request, **kwargs)
             
-            # Get position from form data or GET parameter
-            position = None
-            if request.method == 'POST':
-                position = request.POST.get('position')
-            else:
-                position = request.GET.get('position')
+            # Get ALL top players (not filtered by position) - JavaScript will filter
+            # Get top 60 players total (15 per position roughly)
+            stats = PlayerSeasonStats.objects.filter(
+                season=active_season,
+                appearances__gte=2
+            ).select_related('player', 'player__club').order_by('-skill_rating')[:60]
             
-            # Map MATCH_POSITIONS to player positions
-            position_map = {
-                'ATT': ['ST', 'LW', 'RW'],
-                'MID': ['CAM', 'CM', 'CDM'],
-                'DEF': ['LB', 'CB', 'RB'],
-                'GK': ['GK'],
-            }
-            
-            if position and position in position_map:
-                player_positions = position_map[position]
+            class RankedPlayerChoiceField(ModelChoiceField):
+                def __init__(self, *args, stats_list=None, **kwargs):
+                    self.stats_list = stats_list or []
+                    super().__init__(*args, **kwargs)
                 
-                # Get ranked players for this position
-                stats = PlayerSeasonStats.objects.filter(
-                    season=active_season,
-                    player__position__in=player_positions,
-                    appearances__gte=2
-                ).select_related('player', 'player__club').order_by('-skill_rating')[:20]
-                
-                class RankedPlayerChoiceField(ModelChoiceField):
-                    def __init__(self, *args, stats_list=None, **kwargs):
-                        self.stats_list = stats_list or []
-                        super().__init__(*args, **kwargs)
+                def label_from_instance(self, obj):
+                    # Find rank and skill rating from stats
+                    rank = None
+                    skill_rating = None
+                    for idx, stat in enumerate(self.stats_list, 1):
+                        if stat.player_id == obj.id:
+                            rank = idx
+                            skill_rating = stat.skill_rating
+                            break
                     
-                    def label_from_instance(self, obj):
-                        rank = None
-                        for idx, stat in enumerate(self.stats_list, 1):
-                            if stat.player_id == obj.id:
-                                rank = idx
-                                break
-                        
-                        if rank:
-                            return f"#{rank} - {obj.gamertag} ({obj.position}) - Skill: {getattr(obj, '_skill_rating', '?')}"
-                        return f"{obj.gamertag} ({obj.position})"
-                
-                # Attach skill ratings to players for display
-                player_ids = []
-                for idx, stat in enumerate(stats, 1):
-                    player_ids.append(stat.player_id)
-                    stat.player._skill_rating = round(stat.skill_rating, 2)
-                
-                players = Player.objects.filter(id__in=player_ids).select_related('club')
-                # Preserve order from stats query
-                players_dict = {p.id: p for p in players}
-                ordered_players = [players_dict[pid] for pid in player_ids if pid in players_dict]
-                
-                # Add skill rating for display
-                for stat in stats:
-                    if stat.player_id in players_dict:
-                        players_dict[stat.player_id]._skill_rating = round(stat.skill_rating, 2)
-                
-                from django.db.models.query import QuerySet
-                kwargs["queryset"] = Player.objects.filter(id__in=player_ids)
-                field = RankedPlayerChoiceField(stats_list=list(stats), **kwargs)
-                return field
+                    if rank and skill_rating:
+                        return f"#{rank} - {obj.gamertag} ({obj.position}) - Skill: {round(skill_rating, 2)}"
+                    return f"{obj.gamertag} ({obj.position})"
+            
+            # Get player IDs maintaining order
+            player_ids = [stat.player_id for stat in stats]
+            
+            kwargs["queryset"] = Player.objects.filter(id__in=player_ids).select_related('club')
+            field = RankedPlayerChoiceField(stats_list=list(stats), **kwargs)
+            return field
         
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
