@@ -87,23 +87,48 @@
             console.log('Player selected:', playerId);
             
             if (playerId) {
+                console.log('Making AJAX request to:', '/admin/league/player/' + playerId + '/stats/');
+                
                 $.ajax({
                     url: '/admin/league/player/' + playerId + '/stats/',
                     method: 'GET',
                     success: function(data) {
                         console.log('Stats received:', data);
                         
-                        $('#id_games_played').val(data.appearances || 0);
-                        $('#id_goals').val(data.goals || 0);
-                        $('#id_assists').val(data.assists || 0);
-                        $('#id_clean_sheets').val(data.clean_sheets || 0);
-                        $('#id_avg_rating').val(data.rating ? data.rating.toFixed(2) : '0.00');
-                        $('#id_skill_rating').val(data.skill_rating ? data.skill_rating.toFixed(2) : '0.00');
+                        // Find the fields
+                        var gamesField = $('#id_games_played');
+                        var goalsField = $('#id_goals');
+                        var assistsField = $('#id_assists');
+                        var cleanSheetsField = $('#id_clean_sheets');
+                        var avgRatingField = $('#id_avg_rating');
+                        var skillRatingField = $('#id_skill_rating');
                         
-                        console.log('Stats populated!');
+                        console.log('Games field found:', gamesField.length);
+                        console.log('Goals field found:', goalsField.length);
+                        
+                        // Set values
+                        gamesField.val(data.appearances || 0);
+                        goalsField.val(data.goals || 0);
+                        assistsField.val(data.assists || 0);
+                        cleanSheetsField.val(data.clean_sheets || 0);
+                        avgRatingField.val(data.rating ? data.rating.toFixed(2) : '0.00');
+                        skillRatingField.val(data.skill_rating ? data.skill_rating.toFixed(2) : '0.00');
+                        
+                        // Remove readonly attribute if present
+                        gamesField.prop('readonly', false);
+                        goalsField.prop('readonly', false);
+                        assistsField.prop('readonly', false);
+                        cleanSheetsField.prop('readonly', false);
+                        avgRatingField.prop('readonly', false);
+                        skillRatingField.prop('readonly', false);
+                        
+                        console.log('Stats populated! Games:', gamesField.val());
                     },
-                    error: function(xhr) {
-                        console.error('Error fetching stats:', xhr.responseText);
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching stats');
+                        console.error('Status:', status);
+                        console.error('Error:', error);
+                        console.error('Response:', xhr.responseText);
                     }
                 });
             }
