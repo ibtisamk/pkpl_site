@@ -741,7 +741,6 @@ class TeamOfTheWeekSelectionInline(admin.TabularInline):
     model = TeamOfTheWeekSelection
     extra = 1
     fields = ('position', 'player', 'lineup_position', 'games_played', 'goals', 'assists', 'clean_sheets', 'avg_rating', 'skill_rating')
-    readonly_fields = ('games_played', 'goals', 'assists', 'clean_sheets', 'avg_rating', 'skill_rating')
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "player":
@@ -915,7 +914,6 @@ class TeamOfTheWeekSelectionAdmin(admin.ModelAdmin):
     search_fields = ('player__gamertag', 'totw__season__name')
     autocomplete_fields = ['totw']
     fields = ('totw', 'position', 'player', 'lineup_position', 'games_played', 'goals', 'assists', 'clean_sheets', 'avg_rating', 'skill_rating')
-    readonly_fields = ('games_played', 'goals', 'assists', 'clean_sheets', 'avg_rating', 'skill_rating')
     
     class Media:
         js = ('league/totw_admin.js',)
@@ -952,6 +950,7 @@ class TeamOfTheWeekSelectionAdmin(admin.ModelAdmin):
         if db_field.name == "player":
             from .models import PlayerSeasonStats, Season
             from django.forms import ModelChoiceField
+            from django.db.models import Case, When
             
             active_season = Season.objects.filter(is_active=True).first()
             if not active_season:
@@ -959,35 +958,39 @@ class TeamOfTheWeekSelectionAdmin(admin.ModelAdmin):
             
             # Get ALL top players (not filtered by position) - JavaScript will filter
             # Get top 60 players total (15 per position roughly)
-            stats = PlayerSeasonStats.objects.filter(
+            stats_list = list(PlayerSeasonStats.objects.filter(
                 season=active_season,
                 appearances__gte=2
-            ).select_related('player', 'player__club').order_by('-skill_rating')[:60]
+            ).select_related('player', 'player__club').order_by('-skill_rating')[:60])
+            
+            if not stats_list:
+                return super().formfield_for_foreignkey(db_field, request, **kwargs)
             
             class RankedPlayerChoiceField(ModelChoiceField):
-                def __init__(self, *args, stats_list=None, **kwargs):
-                    self.stats_list = stats_list or []
+                def __init__(self, *args, stats_dict=None, **kwargs):
+                    self.stats_dict = stats_dict or {}
                     super().__init__(*args, **kwargs)
                 
                 def label_from_instance(self, obj):
-                    # Find rank and skill rating from stats
-                    rank = None
-                    skill_rating = None
-                    for idx, stat in enumerate(self.stats_list, 1):
-                        if stat.player_id == obj.id:
-                            rank = idx
-                            skill_rating = stat.skill_rating
-                            break
-                    
-                    if rank and skill_rating:
+                    # Get rank and skill rating from dict
+                    if obj.id in self.stats_dict:
+                        rank, skill_rating = self.stats_dict[obj.id]
                         return f"#{rank} - {obj.gamertag} ({obj.position}) - Skill: {round(skill_rating, 2)}"
                     return f"{obj.gamertag} ({obj.position})"
             
-            # Get player IDs maintaining order
-            player_ids = [stat.player_id for stat in stats]
+            # Create dict mapping player_id to (rank, skill_rating)
+            stats_dict = {}
+            player_ids = []
+            for idx, stat in enumerate(stats_list, 1):
+                stats_dict[stat.player_id] = (idx, stat.skill_rating)
+                player_ids.append(stat.player_id)
             
-            kwargs["queryset"] = Player.objects.filter(id__in=player_ids).select_related('club')
-            field = RankedPlayerChoiceField(stats_list=list(stats), **kwargs)
+            # Preserve order using Case/When
+            preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(player_ids)])
+            queryset = Player.objects.filter(id__in=player_ids).select_related('club').order_by(preserved_order)
+            
+            kwargs["queryset"] = queryset
+            field = RankedPlayerChoiceField(stats_dict=stats_dict, **kwargs)
             return field
         
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
