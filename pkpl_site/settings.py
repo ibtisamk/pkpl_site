@@ -163,8 +163,11 @@ STATIC_URL = '/static/'
 # Where collectstatic will put all files for production
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# Additional locations of static files
+STATICFILES_DIRS = []
+
 # WhiteNoise for serving static files in production
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
 
 # Media files (uploaded images like logos)
