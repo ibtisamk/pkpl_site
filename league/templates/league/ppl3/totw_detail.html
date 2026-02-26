@@ -50,8 +50,8 @@
         {% if selections_by_position.DEF %}
         <div class="flex justify-center gap-4 flex-wrap">
           {% for selection in selections_by_position.DEF %}
-          <div class="bg-green-600/30 border-2 border-green-400/50 rounded-xl p-4 text-center cursor-pointer hover:bg-green-600/50 transition player-card flex-shrink-0"
-               style="width: calc({{ 100|div:selections_by_position.DEF|length }}% - 1rem); min-width: 140px; max-width: 200px;"
+          <div class="bg-green-600/30 border-2 border-green-400/50 rounded-xl p-4 text-center cursor-pointer hover:bg-green-600/50 transition player-card"
+               style="flex: 1 1 140px; max-width: 200px;"
                data-player-id="{{ selection.player.id }}">
             <div class="text-xs text-green-200 font-semibold mb-1">DEF</div>
             <div class="font-bold">{{ selection.player.gamertag }}</div>
@@ -66,8 +66,8 @@
         {% if selections_by_position.MID %}
         <div class="flex justify-center gap-4 flex-wrap">
           {% for selection in selections_by_position.MID %}
-          <div class="bg-yellow-600/30 border-2 border-yellow-400/50 rounded-xl p-4 text-center cursor-pointer hover:bg-yellow-600/50 transition player-card flex-shrink-0"
-               style="width: calc({{ 100|div:selections_by_position.MID|length }}% - 1rem); min-width: 140px; max-width: 200px;"
+          <div class="bg-yellow-600/30 border-2 border-yellow-400/50 rounded-xl p-4 text-center cursor-pointer hover:bg-yellow-600/50 transition player-card"
+               style="flex: 1 1 140px; max-width: 200px;"
                data-player-id="{{ selection.player.id }}">
             <div class="text-xs text-yellow-200 font-semibold mb-1">MID</div>
             <div class="font-bold">{{ selection.player.gamertag }}</div>
@@ -82,8 +82,8 @@
         {% if selections_by_position.ATT %}
         <div class="flex justify-center gap-4 flex-wrap">
           {% for selection in selections_by_position.ATT %}
-          <div class="bg-red-600/30 border-2 border-red-400/50 rounded-xl p-4 text-center cursor-pointer hover:bg-red-600/50 transition player-card flex-shrink-0"
-               style="width: calc({{ 100|div:selections_by_position.ATT|length }}% - 1rem); min-width: 140px; max-width: 200px;"
+          <div class="bg-red-600/30 border-2 border-red-400/50 rounded-xl p-4 text-center cursor-pointer hover:bg-red-600/50 transition player-card"
+               style="flex: 1 1 140px; max-width: 200px;"
                data-player-id="{{ selection.player.id }}">
             <div class="text-xs text-red-200 font-semibold mb-1">ATT</div>
             <div class="font-bold">{{ selection.player.gamertag }}</div>
