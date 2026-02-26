@@ -31,6 +31,15 @@
         var allPlayerOptions = playerField.find('option').clone();
         console.log('Stored', allPlayerOptions.length, 'player options');
         
+        // Debug: log all player options with their positions
+        allPlayerOptions.each(function() {
+            var text = $(this).text();
+            var val = $(this).val();
+            if (val) {
+                console.log('Player option:', text);
+            }
+        });
+        
         positionField.on('change', function() {
             var selectedPosition = $(this).val();
             console.log('Position changed to:', selectedPosition);
@@ -60,11 +69,17 @@
                 
                 if (!optionValue) return;
                 
+                // Extract position from "#1 - Name (POS) - Skill: 8.45"
                 var match = optionText.match(/\(([A-Z]+)\)/);
                 
-                if (match && validPositions.indexOf(match[1]) > -1) {
-                    playerField.append($option.clone());
-                    filteredCount++;
+                if (match) {
+                    console.log('Found player with position:', match[1], 'in text:', optionText);
+                    if (validPositions.indexOf(match[1]) > -1) {
+                        playerField.append($option.clone());
+                        filteredCount++;
+                    }
+                } else {
+                    console.log('No position match in:', optionText);
                 }
             });
             
