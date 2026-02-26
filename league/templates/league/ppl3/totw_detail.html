@@ -1,0 +1,243 @@
+{% extends "league/base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="min-h-screen bg-gradient-to-b from-[#0b2f2f] via-[#0f3d4c] to-[#0b2f2f] text-white px-4 py-10">
+
+  <div class="max-w-6xl mx-auto space-y-8">
+
+    <!-- HEADER -->
+    <div class="text-center space-y-2">
+      <h1 class="text-4xl font-extrabold tracking-wide text-yellow-300 drop-shadow-lg">
+        Team of the Week #{{ totw.totw_number }}
+      </h1>
+      <p class="text-blue-200/80 text-sm">
+        Gameweek{% if totw.gameweek_end and totw.gameweek_end != totw.gameweek_start %}s{% endif %} 
+        {{ totw.gameweek_start }}{% if totw.gameweek_end and totw.gameweek_end != totw.gameweek_start %}-{{ totw.gameweek_end }}{% endif %}
+      </p>
+    </div>
+
+    <!-- FORMATION DISPLAY -->
+    <div class="bg-gradient-to-b from-green-900/40 to-green-800/40 border-2 border-green-700/50 rounded-3xl p-8 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+      
+      <!-- Pitch lines -->
+      <div class="absolute inset-0 opacity-10">
+        <div class="absolute top-1/2 left-0 right-0 h-px bg-white"></div>
+        <div class="absolute top-0 left-1/2 bottom-0 w-px bg-white"></div>
+      </div>
+
+      <!-- Formation -->
+      <div class="relative space-y-6">
+        
+        <!-- GOALKEEPER -->
+        {% if selections_by_position.GK %}
+        <div class="flex justify-center">
+          <div class="w-full max-w-xs">
+            {% for selection in selections_by_position.GK %}
+            <div class="bg-blue-600/30 border-2 border-blue-400/50 rounded-xl p-4 text-center cursor-pointer hover:bg-blue-600/50 transition player-card"
+                 data-player-id="{{ selection.player.id }}">
+              <div class="text-xs text-blue-200 font-semibold mb-1">GK</div>
+              <div class="font-bold text-lg">{{ selection.player.gamertag }}</div>
+              <div class="text-sm text-blue-200/80">{{ selection.player.club.name }}</div>
+              <div class="text-xs text-yellow-300 mt-2">⭐ {{ selection.player.current_skill_rating|floatformat:2 }}</div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- DEFENDERS -->
+        {% if selections_by_position.DEF %}
+        <div class="flex justify-center gap-4 flex-wrap">
+          {% for selection in selections_by_position.DEF %}
+          <div class="bg-green-600/30 border-2 border-green-400/50 rounded-xl p-4 text-center cursor-pointer hover:bg-green-600/50 transition player-card flex-shrink-0"
+               style="width: calc({{ 100|div:selections_by_position.DEF|length }}% - 1rem); min-width: 140px; max-width: 200px;"
+               data-player-id="{{ selection.player.id }}">
+            <div class="text-xs text-green-200 font-semibold mb-1">DEF</div>
+            <div class="font-bold">{{ selection.player.gamertag }}</div>
+            <div class="text-sm text-green-200/80">{{ selection.player.club.name }}</div>
+            <div class="text-xs text-yellow-300 mt-2">⭐ {{ selection.player.current_skill_rating|floatformat:2 }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- MIDFIELDERS -->
+        {% if selections_by_position.MID %}
+        <div class="flex justify-center gap-4 flex-wrap">
+          {% for selection in selections_by_position.MID %}
+          <div class="bg-yellow-600/30 border-2 border-yellow-400/50 rounded-xl p-4 text-center cursor-pointer hover:bg-yellow-600/50 transition player-card flex-shrink-0"
+               style="width: calc({{ 100|div:selections_by_position.MID|length }}% - 1rem); min-width: 140px; max-width: 200px;"
+               data-player-id="{{ selection.player.id }}">
+            <div class="text-xs text-yellow-200 font-semibold mb-1">MID</div>
+            <div class="font-bold">{{ selection.player.gamertag }}</div>
+            <div class="text-sm text-yellow-200/80">{{ selection.player.club.name }}</div>
+            <div class="text-xs text-yellow-300 mt-2">⭐ {{ selection.player.current_skill_rating|floatformat:2 }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- ATTACKERS -->
+        {% if selections_by_position.ATT %}
+        <div class="flex justify-center gap-4 flex-wrap">
+          {% for selection in selections_by_position.ATT %}
+          <div class="bg-red-600/30 border-2 border-red-400/50 rounded-xl p-4 text-center cursor-pointer hover:bg-red-600/50 transition player-card flex-shrink-0"
+               style="width: calc({{ 100|div:selections_by_position.ATT|length }}% - 1rem); min-width: 140px; max-width: 200px;"
+               data-player-id="{{ selection.player.id }}">
+            <div class="text-xs text-red-200 font-semibold mb-1">ATT</div>
+            <div class="font-bold">{{ selection.player.gamertag }}</div>
+            <div class="text-sm text-red-200/80">{{ selection.player.club.name }}</div>
+            <div class="text-xs text-yellow-300 mt-2">⭐ {{ selection.player.current_skill_rating|floatformat:2 }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+    <!-- PLAYER STATS TABLE -->
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-xl">
+      <h2 class="text-2xl font-bold mb-6 text-yellow-300">Player Statistics</h2>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-white/20">
+              <th class="text-left py-3 px-2 text-blue-200">Position</th>
+              <th class="text-left py-3 px-2 text-blue-200">Player</th>
+              <th class="text-left py-3 px-2 text-blue-200">Club</th>
+              <th class="text-center py-3 px-2 text-blue-200">GP</th>
+              <th class="text-center py-3 px-2 text-blue-200">Goals</th>
+              <th class="text-center py-3 px-2 text-blue-200">Assists</th>
+              <th class="text-center py-3 px-2 text-blue-200">CS</th>
+              <th class="text-center py-3 px-2 text-blue-200">Avg Rating</th>
+              <th class="text-center py-3 px-2 text-blue-200">Skill</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for selection in totw.selections.all|dictsort:"lineup_position" %}
+            <tr class="border-b border-white/10 hover:bg-white/5 transition">
+              <td class="py-3 px-2">
+                <span class="px-2 py-1 rounded text-xs font-semibold
+                  {% if selection.position == 'GK' %}bg-blue-500/20 text-blue-200
+                  {% elif selection.position == 'DEF' %}bg-green-500/20 text-green-200
+                  {% elif selection.position == 'MID' %}bg-yellow-500/20 text-yellow-200
+                  {% else %}bg-red-500/20 text-red-200{% endif %}">
+                  {{ selection.position }}
+                </span>
+              </td>
+              <td class="py-3 px-2 font-semibold">{{ selection.player.gamertag }}</td>
+              <td class="py-3 px-2 text-blue-200/80">{{ selection.player.club.name }}</td>
+              <td class="py-3 px-2 text-center">{{ selection.games_played }}</td>
+              <td class="py-3 px-2 text-center">{{ selection.goals }}</td>
+              <td class="py-3 px-2 text-center">{{ selection.assists }}</td>
+              <td class="py-3 px-2 text-center">{{ selection.clean_sheets }}</td>
+              <td class="py-3 px-2 text-center">{{ selection.avg_rating|floatformat:2 }}</td>
+              <td class="py-3 px-2 text-center font-semibold text-yellow-300">{{ selection.skill_rating|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BACK BUTTONS -->
+    <div class="flex justify-center gap-4 pt-4">
+      <a href="{% url 'totw_list' %}" 
+         class="inline-block px-6 py-3 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-400 transition">
+        ← All TOTWs
+      </a>
+      <a href="{% url 'ppl3_overview' %}" 
+         class="inline-block px-6 py-3 bg-yellow-400 text-[#0b2f2f] rounded-xl font-semibold hover:bg-yellow-300 transition">
+        ← Back to Overview
+      </a>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Player Stats Modal -->
+<div id="playerModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50" onclick="closeModal(event)">
+  <div class="bg-gradient-to-b from-[#0f3d4c] to-[#0b2f2f] border-2 border-yellow-300/50 rounded-2xl p-8 max-w-md w-full mx-4 relative" onclick="event.stopPropagation()">
+    <button onclick="closeModal()" class="absolute top-4 right-4 text-white/60 hover:text-white text-2xl">&times;</button>
+    
+    <div id="modalContent" class="space-y-4">
+      <div class="text-center">
+        <h3 id="playerName" class="text-2xl font-bold text-yellow-300 mb-2"></h3>
+        <p id="playerClub" class="text-blue-200/80"></p>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-4 pt-4">
+        <div class="bg-white/5 rounded-lg p-3 text-center">
+          <div class="text-xs text-blue-200/60 mb-1">Games Played</div>
+          <div id="statGames" class="text-2xl font-bold text-yellow-300"></div>
+        </div>
+        <div class="bg-white/5 rounded-lg p-3 text-center">
+          <div class="text-xs text-blue-200/60 mb-1">Goals</div>
+          <div id="statGoals" class="text-2xl font-bold text-yellow-300"></div>
+        </div>
+        <div class="bg-white/5 rounded-lg p-3 text-center">
+          <div class="text-xs text-blue-200/60 mb-1">Assists</div>
+          <div id="statAssists" class="text-2xl font-bold text-yellow-300"></div>
+        </div>
+        <div class="bg-white/5 rounded-lg p-3 text-center">
+          <div class="text-xs text-blue-200/60 mb-1">Clean Sheets</div>
+          <div id="statCS" class="text-2xl font-bold text-yellow-300"></div>
+        </div>
+        <div class="bg-white/5 rounded-lg p-3 text-center">
+          <div class="text-xs text-blue-200/60 mb-1">Avg Rating</div>
+          <div id="statRating" class="text-2xl font-bold text-yellow-300"></div>
+        </div>
+        <div class="bg-white/5 rounded-lg p-3 text-center">
+          <div class="text-xs text-blue-200/60 mb-1">Skill Rating</div>
+          <div id="statSkill" class="text-2xl font-bold text-yellow-300"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function closeModal(event) {
+  if (!event || event.target.id === 'playerModal') {
+    document.getElementById('playerModal').classList.add('hidden');
+    document.getElementById('playerModal').classList.remove('flex');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.player-card').forEach(card => {
+    card.addEventListener('click', function() {
+      const playerId = this.dataset.playerId;
+      
+      // Fetch player stats
+      fetch(`/admin/league/player/${playerId}/stats/`)
+        .then(response => response.json())
+        .then(data => {
+          // Populate modal
+          document.getElementById('playerName').textContent = data.name || 'N/A';
+          document.getElementById('playerClub').textContent = data.club || 'N/A';
+          document.getElementById('statGames').textContent = data.appearances || '0';
+          document.getElementById('statGoals').textContent = data.goals || '0';
+          document.getElementById('statAssists').textContent = data.assists || '0';
+          document.getElementById('statCS').textContent = data.clean_sheets || '0';
+          document.getElementById('statRating').textContent = data.rating ? parseFloat(data.rating).toFixed(2) : 'N/A';
+          document.getElementById('statSkill').textContent = data.skill_rating ? parseFloat(data.skill_rating).toFixed(2) : 'N/A';
+          
+          // Show modal
+          const modal = document.getElementById('playerModal');
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+        })
+        .catch(error => {
+          console.error('Error fetching player stats:', error);
+        });
+    });
+  });
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "league/base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="min-h-screen bg-gradient-to-b from-[#0b2f2f] via-[#0f3d4c] to-[#0b2f2f] text-white px-4 py-10">
+
+  <div class="max-w-6xl mx-auto space-y-8">
+
+    <!-- HEADER -->
+    <div class="text-center space-y-2">
+      <h1 class="text-4xl font-extrabold tracking-wide text-yellow-300 drop-shadow-lg">
+        Team of the Week
+      </h1>
+      <p class="text-blue-200/80 text-sm">
+        All published Teams of the Week for {{ season.name }}
+      </p>
+    </div>
+
+    <!-- TOTW LIST -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for totw in totws %}
+      <a href="{% url 'totw_detail' totw.id %}"
+         class="block bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-xl hover:bg-white/10 hover:border-yellow-300/50 transition">
+        
+        <div class="space-y-3">
+          <h2 class="text-2xl font-bold text-yellow-300">
+            TOTW #{{ totw.totw_number }}
+          </h2>
+          
+          <div class="text-sm text-blue-200/80 space-y-1">
+            <p>
+              <span class="font-semibold">Gameweeks:</span> 
+              {{ totw.gameweek_start }}{% if totw.gameweek_end and totw.gameweek_end != totw.gameweek_start %}-{{ totw.gameweek_end }}{% endif %}
+            </p>
+            <p>
+              <span class="font-semibold">Players:</span> 
+              {{ totw.selections.count }} selected
+            </p>
+          </div>
+
+          {% if totw.selections.all %}
+          <div class="pt-3 border-t border-white/10">
+            <p class="text-xs text-blue-200/60 mb-2">Formation Preview:</p>
+            <div class="flex gap-1 text-xs">
+              {% with gk_count=0 def_count=0 mid_count=0 att_count=0 %}
+                {% for selection in totw.selections.all %}
+                  {% if selection.position == 'GK' %}
+                    {% with gk_count=gk_count|add:1 %}{% endwith %}
+                  {% elif selection.position == 'DEF' %}
+                    {% with def_count=def_count|add:1 %}{% endwith %}
+                  {% elif selection.position == 'MID' %}
+                    {% with mid_count=mid_count|add:1 %}{% endwith %}
+                  {% elif selection.position == 'ATT' %}
+                    {% with att_count=att_count|add:1 %}{% endwith %}
+                  {% endif %}
+                {% endfor %}
+                <span class="px-2 py-1 bg-blue-500/20 rounded">GK: {{ gk_count }}</span>
+                <span class="px-2 py-1 bg-green-500/20 rounded">DEF: {{ def_count }}</span>
+                <span class="px-2 py-1 bg-yellow-500/20 rounded">MID: {{ mid_count }}</span>
+                <span class="px-2 py-1 bg-red-500/20 rounded">ATT: {{ att_count }}</span>
+              {% endwith %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </a>
+      {% empty %}
+      <div class="col-span-full text-center text-blue-200/70 py-12">
+        <p>No Teams of the Week published yet.</p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- BACK BUTTON -->
+    <div class="text-center pt-8">
+      <a href="{% url 'ppl3_overview' %}" 
+         class="inline-block px-6 py-3 bg-yellow-400 text-[#0b2f2f] rounded-xl font-semibold hover:bg-yellow-300 transition">
+        ← Back to Overview
+      </a>
+    </div>
+
+  </div>
+
+</div>
+
+{% endblock %}
