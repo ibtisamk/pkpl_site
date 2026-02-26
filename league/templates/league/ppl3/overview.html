@@ -45,6 +45,37 @@
       </div>
     </section>
 
+    <!-- TEAM OF THE WEEK -->
+    {% if latest_totw %}
+    <section>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold text-yellow-300">Team of the Week #{{ latest_totw.totw_number }}</h2>
+        <a href="{% url 'totw_list' %}" class="text-sm text-blue-300 hover:text-blue-200 transition">View All TOTWs →</a>
+      </div>
+
+      <a href="{% url 'totw_detail' latest_totw.id %}"
+         class="block bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border border-yellow-500/20 rounded-xl p-6 backdrop-blur-xl hover:from-yellow-500/15 hover:to-yellow-600/10 transition">
+        
+        <div class="text-sm text-blue-200 mb-3">
+          Gameweeks {{ latest_totw.start_gameweek }}-{{ latest_totw.end_gameweek }} • {{ latest_totw.selections.count }} Players
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {% for selection in latest_totw.selections.all|slice:":11" %}
+          <div class="bg-white/5 rounded-lg p-3 text-center">
+            <div class="text-xs text-yellow-400 font-semibold mb-1">{{ selection.get_position_display }}</div>
+            <div class="text-sm font-bold">{{ selection.player.gamertag }}</div>
+            <div class="text-xs text-blue-200/70">{{ selection.player.club.short_name|default:selection.player.club.name }}</div>
+            {% if selection.skill_rating %}
+            <div class="text-xs text-yellow-300 mt-1">{{ selection.skill_rating|floatformat:2 }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </a>
+    </section>
+    {% endif %}
+
     <!-- TOP PLAYERS SNAPSHOT -->
     <section>
       <div class="flex justify-between items-center mb-4">
@@ -310,37 +341,6 @@
         {% endfor %}
       </div>
     </section>
-
-    <!-- TEAM OF THE WEEK -->
-    {% if latest_totw %}
-    <section>
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-2xl font-bold text-yellow-300">Team of the Week #{{ latest_totw.totw_number }}</h2>
-        <a href="{% url 'totw_list' %}" class="text-sm text-blue-300 hover:text-blue-200 transition">View All TOTWs →</a>
-      </div>
-
-      <a href="{% url 'totw_detail' latest_totw.id %}"
-         class="block bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border border-yellow-500/20 rounded-xl p-6 backdrop-blur-xl hover:from-yellow-500/15 hover:to-yellow-600/10 transition">
-        
-        <div class="text-sm text-blue-200 mb-3">
-          Gameweeks {{ latest_totw.start_gameweek }}-{{ latest_totw.end_gameweek }} • {{ latest_totw.selections.count }} Players
-        </div>
-
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {% for selection in latest_totw.selections.all|slice:":11" %}
-          <div class="bg-white/5 rounded-lg p-3 text-center">
-            <div class="text-xs text-yellow-400 font-semibold mb-1">{{ selection.get_position_display }}</div>
-            <div class="text-sm font-bold">{{ selection.player.gamertag }}</div>
-            <div class="text-xs text-blue-200/70">{{ selection.player.club.short_name|default:selection.player.club.name }}</div>
-            {% if selection.skill_rating %}
-            <div class="text-xs text-yellow-300 mt-1">{{ selection.skill_rating|floatformat:2 }}</div>
-            {% endif %}
-          </div>
-          {% endfor %}
-        </div>
-      </a>
-    </section>
-    {% endif %}
 
     <!-- KNOCKOUT PREVIEW (moved above) -->
 
