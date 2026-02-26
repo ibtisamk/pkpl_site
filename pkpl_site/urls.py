@@ -41,6 +41,7 @@ urlpatterns = [
     # DJANGO ADMIN
     # -----------------------------------------------------
     path("admin/", admin.site.urls),
+    path("admin/league/player/<int:player_id>/stats/", views.player_stats_api, name="player_stats_api"),
 
     # -----------------------------------------------------
     # STATIC PAGES / ARCHIVE

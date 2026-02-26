@@ -4,7 +4,8 @@ from django.shortcuts import (
     redirect
 )
 from django.urls import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
+from django.contrib.admin.views.decorators import staff_member_required
 
 from .forms import TeamRegistrationForm, PlayerRegistrationForm
 from .models import (
@@ -1043,4 +1044,44 @@ def totw_detail(request, totw_id):
         "totw": totw,
         "selections_by_position": selections_by_position,
     })
+
+
+# ---------------------------------------------------------
+# ADMIN API: Player Stats for TOTW Selection
+# ---------------------------------------------------------
+@staff_member_required
+def player_stats_api(request, player_id):
+    """API endpoint for fetching player stats for TOTW admin"""
+    try:
+        player = Player.objects.get(id=player_id)
+        active_season = Season.objects.filter(is_active=True).first()
+        
+        if not active_season:
+            return JsonResponse({'error': 'No active season'}, status=404)
+        
+        try:
+            season_stats = PlayerSeasonStats.objects.get(
+                player=player,
+                season=active_season
+            )
+            
+            return JsonResponse({
+                'appearances': season_stats.appearances,
+                'goals': season_stats.goals,
+                'assists': season_stats.assists,
+                'clean_sheets': season_stats.clean_sheets,
+                'rating': float(season_stats.rating) if season_stats.rating else 0,
+                'skill_rating': float(season_stats.skill_rating) if season_stats.skill_rating else 0,
+            })
+        except PlayerSeasonStats.DoesNotExist:
+            return JsonResponse({
+                'appearances': 0,
+                'goals': 0,
+                'assists': 0,
+                'clean_sheets': 0,
+                'rating': 0,
+                'skill_rating': 0,
+            })
+    except Player.DoesNotExist:
+        return JsonResponse({'error': 'Player not found'}, status=404)
 

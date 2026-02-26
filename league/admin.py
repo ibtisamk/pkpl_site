@@ -739,10 +739,48 @@ class KnockoutMatchAdmin(admin.ModelAdmin):
 
 class TeamOfTheWeekSelectionInline(admin.TabularInline):
     model = TeamOfTheWeekSelection
-    extra = 0
-    autocomplete_fields = ['player']
-    fields = ('player', 'position', 'games_played', 'goals', 'assists', 'clean_sheets', 'avg_rating', 'skill_rating', 'lineup_position')
+    extra = 1
+    fields = ('position', 'player', 'lineup_position', 'games_played', 'goals', 'assists', 'clean_sheets', 'avg_rating', 'skill_rating')
     readonly_fields = ('games_played', 'goals', 'assists', 'clean_sheets', 'avg_rating', 'skill_rating')
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "player":
+            # This will be enhanced by JavaScript to filter based on position
+            # For now, show top players by skill rating
+            from .models import PlayerSeasonStats, Season
+            
+            active_season = Season.objects.filter(is_active=True).first()
+            if active_season:
+                # Get all players ranked by skill rating
+                top_stats = PlayerSeasonStats.objects.filter(
+                    season=active_season,
+                    appearances__gte=2
+                ).select_related('player', 'player__club').order_by('-skill_rating')[:50]
+                
+                # Create choices with rank numbers
+                from django.forms import ModelChoiceField
+                
+                class RankedPlayerChoiceField(ModelChoiceField):
+                    def label_from_instance(self, obj):
+                        # Find rank in the stats
+                        rank = None
+                        for idx, stat in enumerate(top_stats, 1):
+                            if stat.player_id == obj.id:
+                                rank = idx
+                                break
+                        
+                        if rank:
+                            return f"#{rank} - {obj.gamertag} ({obj.position}) - {obj.club.short_name or obj.club.name}"
+                        return f"{obj.gamertag} ({obj.position}) - {obj.club.short_name or obj.club.name}"
+                
+                player_ids = [stat.player_id for stat in top_stats]
+                kwargs["queryset"] = Player.objects.filter(id__in=player_ids)
+                kwargs["widget"] = kwargs.get("widget", None)
+                
+                field = RankedPlayerChoiceField(**kwargs)
+                return field
+        
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 @admin.action(description="Generate TOTW automatically")
@@ -835,6 +873,9 @@ class TeamOfTheWeekAdmin(admin.ModelAdmin):
     inlines = [TeamOfTheWeekSelectionInline]
     actions = [action_generate_totw]
     
+    class Media:
+        js = ('league/totw_admin.js',)
+    
     def gameweek_range(self, obj):
         if obj.start_gameweek and obj.end_gameweek:
             if obj.start_gameweek == obj.end_gameweek:
@@ -869,52 +910,113 @@ class TeamOfTheWeekAdmin(admin.ModelAdmin):
 
 @admin.register(TeamOfTheWeekSelection)
 class TeamOfTheWeekSelectionAdmin(admin.ModelAdmin):
-    list_display = ('player', 'totw', 'position', 'games_played', 'goals', 'assists', 'avg_rating', 'skill_rating')
+    list_display = ('player', 'totw', 'position', 'lineup_position', 'games_played', 'goals', 'assists', 'avg_rating', 'skill_rating')
     list_filter = ('totw__season', 'totw__week_type', 'position')
     search_fields = ('player__gamertag', 'totw__season__name')
-    autocomplete_fields = ['player', 'totw']
-    fields = ('totw', 'player', 'position', 'games_played', 'goals', 'assists', 'clean_sheets', 'avg_rating', 'skill_rating', 'lineup_position')
+    autocomplete_fields = ['totw']
+    fields = ('totw', 'position', 'player', 'lineup_position', 'games_played', 'goals', 'assists', 'clean_sheets', 'avg_rating', 'skill_rating')
     readonly_fields = ('games_played', 'goals', 'assists', 'clean_sheets', 'avg_rating', 'skill_rating')
+    
+    class Media:
+        js = ('league/totw_admin.js',)
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        # Optimize with select_related to avoid N+1 queries
         return qs.select_related('player', 'player__club', 'totw', 'totw__season')
+    
+    def save_model(self, request, obj, form, change):
+        """Auto-populate stats from PlayerSeasonStats when player is selected"""
+        if obj.player and obj.totw:
+            from .models import PlayerSeasonStats
+            
+            try:
+                season_stats = PlayerSeasonStats.objects.get(
+                    player=obj.player,
+                    season=obj.totw.season
+                )
+                
+                # Auto-populate all stats from current season
+                obj.games_played = season_stats.appearances
+                obj.goals = season_stats.goals
+                obj.assists = season_stats.assists
+                obj.clean_sheets = season_stats.clean_sheets
+                obj.avg_rating = season_stats.rating
+                obj.skill_rating = season_stats.skill_rating
+                
+            except PlayerSeasonStats.DoesNotExist:
+                pass
+        
+        super().save_model(request, obj, form, change)
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "player":
-            # Get position from request if editing or from form
-            position = request.GET.get('position')
+            from .models import PlayerSeasonStats, Season
+            from django.forms import ModelChoiceField
             
-            if position:
-                # Map MATCH_POSITIONS to player positions
-                position_map = {
-                    'ATT': ['ST', 'LW', 'RW'],
-                    'MID': ['CAM', 'CM', 'CDM'],
-                    'DEF': ['LB', 'CB', 'RB'],
-                    'GK': ['GK'],
-                }
+            active_season = Season.objects.filter(is_active=True).first()
+            if not active_season:
+                return super().formfield_for_foreignkey(db_field, request, **kwargs)
+            
+            # Get position from form data or GET parameter
+            position = None
+            if request.method == 'POST':
+                position = request.POST.get('position')
+            else:
+                position = request.GET.get('position')
+            
+            # Map MATCH_POSITIONS to player positions
+            position_map = {
+                'ATT': ['ST', 'LW', 'RW'],
+                'MID': ['CAM', 'CM', 'CDM'],
+                'DEF': ['LB', 'CB', 'RB'],
+                'GK': ['GK'],
+            }
+            
+            if position and position in position_map:
+                player_positions = position_map[position]
                 
-                player_positions = position_map.get(position, [])
+                # Get ranked players for this position
+                stats = PlayerSeasonStats.objects.filter(
+                    season=active_season,
+                    player__position__in=player_positions,
+                    appearances__gte=2
+                ).select_related('player', 'player__club').order_by('-skill_rating')[:20]
                 
-                if player_positions:
-                    # Show top players by skill rating for this position
-                    from .models import PlayerSeasonStats, Season
+                class RankedPlayerChoiceField(ModelChoiceField):
+                    def __init__(self, *args, stats_list=None, **kwargs):
+                        self.stats_list = stats_list or []
+                        super().__init__(*args, **kwargs)
                     
-                    active_season = Season.objects.filter(is_active=True).first()
-                    if active_season:
-                        # Get top players with their season stats
-                        top_player_ids = list(
-                            PlayerSeasonStats.objects.filter(
-                                season=active_season,
-                                player__position__in=player_positions,
-                                appearances__gte=2
-                            ).order_by('-skill_rating')[:15]
-                            .values_list('player_id', flat=True)
-                        )
+                    def label_from_instance(self, obj):
+                        rank = None
+                        for idx, stat in enumerate(self.stats_list, 1):
+                            if stat.player_id == obj.id:
+                                rank = idx
+                                break
                         
-                        kwargs["queryset"] = Player.objects.filter(
-                            id__in=top_player_ids
-                        ).select_related('club').order_by('-season_stats__skill_rating')
+                        if rank:
+                            return f"#{rank} - {obj.gamertag} ({obj.position}) - Skill: {getattr(obj, '_skill_rating', '?')}"
+                        return f"{obj.gamertag} ({obj.position})"
+                
+                # Attach skill ratings to players for display
+                player_ids = []
+                for idx, stat in enumerate(stats, 1):
+                    player_ids.append(stat.player_id)
+                    stat.player._skill_rating = round(stat.skill_rating, 2)
+                
+                players = Player.objects.filter(id__in=player_ids).select_related('club')
+                # Preserve order from stats query
+                players_dict = {p.id: p for p in players}
+                ordered_players = [players_dict[pid] for pid in player_ids if pid in players_dict]
+                
+                # Add skill rating for display
+                for stat in stats:
+                    if stat.player_id in players_dict:
+                        players_dict[stat.player_id]._skill_rating = round(stat.skill_rating, 2)
+                
+                from django.db.models.query import QuerySet
+                kwargs["queryset"] = Player.objects.filter(id__in=player_ids)
+                field = RankedPlayerChoiceField(stats_list=list(stats), **kwargs)
+                return field
         
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
