@@ -950,21 +950,36 @@ class TeamOfTheWeekSelectionAdmin(admin.ModelAdmin):
         if db_field.name == "player":
             from .models import PlayerSeasonStats, Season
             from django.forms import ModelChoiceField
-            from django.db.models import Case, When
+            from django.db.models import Case, When, Q
             
             active_season = Season.objects.filter(is_active=True).first()
             if not active_season:
                 return super().formfield_for_foreignkey(db_field, request, **kwargs)
             
-            # Get ALL top players (not filtered by position) - JavaScript will filter
-            # Get top 60 players total (15 per position roughly)
-            stats_list = list(PlayerSeasonStats.objects.filter(
-                season=active_season,
-                appearances__gte=2
-            ).select_related('player', 'player__club').order_by('-skill_rating')[:60])
+            # Get top players from EACH position to ensure goalkeepers are included
+            position_map = {
+                'ATT': ['ST', 'LW', 'RW'],
+                'MID': ['CAM', 'CM', 'CDM'],
+                'DEF': ['LB', 'CB', 'RB'],
+                'GK': ['GK']
+            }
             
-            if not stats_list:
+            all_stats = []
+            for position_type, player_positions in position_map.items():
+                # Get top 3 goalkeepers, 15 for others
+                limit = 3 if position_type == 'GK' else 15
+                stats = PlayerSeasonStats.objects.filter(
+                    season=active_season,
+                    player__position__in=player_positions,
+                    appearances__gte=2
+                ).select_related('player', 'player__club').order_by('-skill_rating')[:limit]
+                all_stats.extend(list(stats))
+            
+            if not all_stats:
                 return super().formfield_for_foreignkey(db_field, request, **kwargs)
+            
+            # Sort all stats by skill_rating for overall ranking
+            all_stats.sort(key=lambda x: x.skill_rating, reverse=True)
             
             class RankedPlayerChoiceField(ModelChoiceField):
                 def __init__(self, *args, stats_dict=None, **kwargs):
@@ -981,7 +996,7 @@ class TeamOfTheWeekSelectionAdmin(admin.ModelAdmin):
             # Create dict mapping player_id to (rank, skill_rating)
             stats_dict = {}
             player_ids = []
-            for idx, stat in enumerate(stats_list, 1):
+            for idx, stat in enumerate(all_stats, 1):
                 stats_dict[stat.player_id] = (idx, stat.skill_rating)
                 player_ids.append(stat.player_id)
             
