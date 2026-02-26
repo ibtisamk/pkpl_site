@@ -815,6 +815,10 @@ class TeamOfTheWeekSelection(models.Model):
     assists = models.IntegerField(default=0)
     clean_sheets = models.IntegerField(default=0)
     avg_rating = models.FloatField(default=0)
+    skill_rating = models.FloatField(
+        default=0,
+        help_text="Skill rating during this period (80% rating + 20% contributions)"
+    )
     
     # Display order (1-11 for starting XI)
     lineup_position = models.IntegerField(
@@ -828,6 +832,7 @@ class TeamOfTheWeekSelection(models.Model):
         indexes = [
             models.Index(fields=['totw', 'position']),
             models.Index(fields=['player', '-avg_rating']),
+            models.Index(fields=['position', '-skill_rating']),
         ]
     
     def __str__(self):

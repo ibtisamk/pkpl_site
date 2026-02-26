@@ -741,8 +741,8 @@ class TeamOfTheWeekSelectionInline(admin.TabularInline):
     model = TeamOfTheWeekSelection
     extra = 0
     autocomplete_fields = ['player']
-    fields = ('player', 'position', 'games_played', 'goals', 'assists', 'clean_sheets', 'avg_rating', 'lineup_position')
-    readonly_fields = ('games_played', 'goals', 'assists', 'clean_sheets', 'avg_rating')
+    fields = ('player', 'position', 'games_played', 'goals', 'assists', 'clean_sheets', 'avg_rating', 'skill_rating', 'lineup_position')
+    readonly_fields = ('games_played', 'goals', 'assists', 'clean_sheets', 'avg_rating', 'skill_rating')
 
 
 @admin.action(description="Generate TOTW automatically")
@@ -869,12 +869,52 @@ class TeamOfTheWeekAdmin(admin.ModelAdmin):
 
 @admin.register(TeamOfTheWeekSelection)
 class TeamOfTheWeekSelectionAdmin(admin.ModelAdmin):
-    list_display = ('player', 'totw', 'position', 'games_played', 'goals', 'assists', 'avg_rating')
+    list_display = ('player', 'totw', 'position', 'games_played', 'goals', 'assists', 'avg_rating', 'skill_rating')
     list_filter = ('totw__season', 'totw__week_type', 'position')
     search_fields = ('player__gamertag', 'totw__season__name')
     autocomplete_fields = ['player', 'totw']
+    fields = ('totw', 'player', 'position', 'games_played', 'goals', 'assists', 'clean_sheets', 'avg_rating', 'skill_rating', 'lineup_position')
+    readonly_fields = ('games_played', 'goals', 'assists', 'clean_sheets', 'avg_rating', 'skill_rating')
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         # Optimize with select_related to avoid N+1 queries
-        return qs.select_related('player', 'totw', 'totw__season')
+        return qs.select_related('player', 'player__club', 'totw', 'totw__season')
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "player":
+            # Get position from request if editing or from form
+            position = request.GET.get('position')
+            
+            if position:
+                # Map MATCH_POSITIONS to player positions
+                position_map = {
+                    'ATT': ['ST', 'LW', 'RW'],
+                    'MID': ['CAM', 'CM', 'CDM'],
+                    'DEF': ['LB', 'CB', 'RB'],
+                    'GK': ['GK'],
+                }
+                
+                player_positions = position_map.get(position, [])
+                
+                if player_positions:
+                    # Show top players by skill rating for this position
+                    from .models import PlayerSeasonStats, Season
+                    
+                    active_season = Season.objects.filter(is_active=True).first()
+                    if active_season:
+                        # Get top players with their season stats
+                        top_player_ids = list(
+                            PlayerSeasonStats.objects.filter(
+                                season=active_season,
+                                player__position__in=player_positions,
+                                appearances__gte=2
+                            ).order_by('-skill_rating')[:15]
+                            .values_list('player_id', flat=True)
+                        )
+                        
+                        kwargs["queryset"] = Player.objects.filter(
+                            id__in=top_player_ids
+                        ).select_related('club').order_by('-season_stats__skill_rating')
+        
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
