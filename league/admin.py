@@ -870,10 +870,43 @@ class TeamOfTheWeekAdmin(admin.ModelAdmin):
     list_filter = ('season', 'week_type', 'is_published')
     search_fields = ('season__name',)
     inlines = [TeamOfTheWeekSelectionInline]
-    actions = [action_generate_totw]
+    actions = [action_generate_totw, 'action_publish_totw']
     
     class Media:
         js = ('league/totw_admin.js',)
+    
+    def action_publish_totw(self, request, queryset):
+        """Publish TOTW after showing formation confirmation"""
+        from django.db.models import Count
+        
+        for totw in queryset:
+            # Count positions
+            position_counts = totw.selections.values('position').annotate(count=Count('id'))
+            counts = {pc['position']: pc['count'] for pc in position_counts}
+            
+            gk_count = counts.get('GK', 0)
+            def_count = counts.get('DEF', 0)
+            mid_count = counts.get('MID', 0)
+            att_count = counts.get('ATT', 0)
+            total = gk_count + def_count + mid_count + att_count
+            
+            # Validate formation
+            if total != 11:
+                self.message_user(request, f"TOTW #{totw.totw_number} has {total} players. Need exactly 11!", level='ERROR')
+                continue
+            
+            if gk_count != 1:
+                self.message_user(request, f"TOTW #{totw.totw_number} has {gk_count} goalkeepers. Need exactly 1!", level='ERROR')
+                continue
+            
+            # Publish
+            totw.is_published = True
+            totw.save()
+            
+            formation = f"{def_count}-{mid_count}-{att_count}"
+            self.message_user(request, f"Published TOTW #{totw.totw_number} with formation {formation} (GK: {gk_count}, DEF: {def_count}, MID: {mid_count}, ATT: {att_count})")
+    
+    action_publish_totw.short_description = "Publish selected TOTWs (with formation check)"
     
     def gameweek_range(self, obj):
         if obj.start_gameweek and obj.end_gameweek:

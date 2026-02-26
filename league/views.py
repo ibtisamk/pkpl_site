@@ -601,6 +601,21 @@ def ppl3_overview(request):
             .order_by('-assists', '-goals', '-rating')[:5]
         )
 
+    # -----------------------------
+    # LATEST PUBLISHED TOTW
+    # -----------------------------
+    latest_totw = None
+    try:
+        latest_totw = (
+            TeamOfTheWeek.objects
+            .filter(season=season, is_published=True)
+            .prefetch_related('selections__player__club')
+            .order_by('-totw_number')
+            .first()
+        )
+    except Exception:
+        pass
+
     return render(request, "league/ppl3/overview.html", {
         "season": season,
         "groups": group_data,
@@ -610,6 +625,7 @@ def ppl3_overview(request):
         "top_players": top_players,
         "top_scorers": top_scorers,
         "top_assisters": top_assisters,
+        "latest_totw": latest_totw,
     })
 
 

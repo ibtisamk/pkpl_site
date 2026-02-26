@@ -73,6 +73,8 @@ urlpatterns = [
     path("ppl3/match/<int:match_id>/", views.ppl3_match_detail, name="ppl3_match_detail"),
     path("ppl3/team/<int:club_id>/", views.ppl3_team, name="ppl3_team"),
     path("ppl3/player/<int:player_id>/", views.ppl3_player, name="ppl3_player"),
+    path("ppl3/totw/", views.totw_list, name="totw_list"),
+    path("ppl3/totw/<int:totw_id>/", views.totw_detail, name="totw_detail"),
 
     # Fixtures pages
     path("fixtures/upcoming/", views.upcoming_fixtures, name="upcoming_fixtures"),
