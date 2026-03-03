@@ -1,5 +1,6 @@
 from django.db.models.signals import post_save, post_delete, pre_delete
 from django.dispatch import receiver
+import threading
 from .models import KnockoutMatch, Season, GroupMembership
 from .services import resolve_knockout_placeholders
 from .models import (
@@ -10,6 +11,15 @@ from .models import (
     KnockoutMatch,
 )
 from .services import resolve_knockout_placeholders
+
+
+# Thread-local storage for skipping rebuilds during admin saves
+_thread_local = threading.local()
+
+def get_skip_rebuild_matches():
+    if not hasattr(_thread_local, 'skip_rebuild_matches'):
+        _thread_local.skip_rebuild_matches = set()
+    return _thread_local.skip_rebuild_matches
 
 
 # ---------------------------------------------------------
@@ -322,6 +332,13 @@ def update_player_season_stats(sender, instance, created, **kwargs):
     if _SKIP_REBUILD_DURING_SEASON_DELETE:
         return
 
+    # Check if parent match is in skip list (for admin bulk operations)
+    skip_matches = get_skip_rebuild_matches()
+    if pms.group_match_id and ('group', pms.group_match_id) in skip_matches:
+        return
+    if pms.knockout_match_id and ('knockout', pms.knockout_match_id) in skip_matches:
+        return
+
     season = _resolve_season_from_pms(pms)
     if not season or not season.is_active:
         return
@@ -337,6 +354,13 @@ def player_match_stats_deleted(sender, instance, **kwargs):
     pms = instance
 
     if _SKIP_REBUILD_DURING_SEASON_DELETE:
+        return
+
+    # Check if parent match is in skip list
+    skip_matches = get_skip_rebuild_matches()
+    if pms.group_match_id and ('group', pms.group_match_id) in skip_matches:
+        return
+    if pms.knockout_match_id and ('knockout', pms.knockout_match_id) in skip_matches:
         return
 
     season = _resolve_season_from_pms(pms)

@@ -314,23 +314,28 @@ class GroupMatchAdmin(admin.ModelAdmin):
         """
         Skip signal during formset save to prevent timeout.
         """
+        from league.signals import get_skip_rebuild_matches
         obj = form.instance
-        obj._skip_rebuild_signal = True
+        skip_matches = get_skip_rebuild_matches()
+        skip_matches.add(('group', obj.id))
         
         try:
             super().save_related(request, form, formsets, change)
         finally:
-            if hasattr(obj, '_skip_rebuild_signal'):
-                del obj._skip_rebuild_signal
+            skip_matches.discard(('group', obj.id))
     
     def save_model(self, request, obj, form, change):
         """Save the match and skip signal."""
-        obj._skip_rebuild_signal = True
+        from league.signals import get_skip_rebuild_matches
+        skip_matches = get_skip_rebuild_matches()
+        if obj.id:
+            skip_matches.add(('group', obj.id))
+        
         try:
             super().save_model(request, obj, form, change)
         finally:
-            if hasattr(obj, '_skip_rebuild_signal'):
-                del obj._skip_rebuild_signal
+            if obj.id:
+                skip_matches.discard(('group', obj.id))
 
     # Removed formfield_for_manytomany override; not needed for custom Group model
 
