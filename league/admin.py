@@ -257,6 +257,16 @@ class GroupMatchAdmin(admin.ModelAdmin):
     )
     inlines = [PlayerMatchStatsGroupInline]
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related(
+            'fixture',
+            'fixture__season',
+            'fixture__home_club',
+            'fixture__away_club',
+            'fixture__group'
+        ).prefetch_related('home_players', 'away_players')
+
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         # limit home_players/away_players to players from the fixture's clubs
         obj_id = request.resolver_match.kwargs.get('object_id')
