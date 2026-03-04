@@ -256,6 +256,7 @@ class GroupMatchAdmin(admin.ModelAdmin):
         'fixture__date',
     )
     inlines = [PlayerMatchStatsGroupInline]
+    autocomplete_fields = ['home_players', 'away_players']
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -266,21 +267,6 @@ class GroupMatchAdmin(admin.ModelAdmin):
             'fixture__away_club',
             'fixture__group'
         ).prefetch_related('home_players', 'away_players')
-
-    def formfield_for_manytomany(self, db_field, request, **kwargs):
-        # limit home_players/away_players to players from the fixture's clubs
-        obj_id = request.resolver_match.kwargs.get('object_id')
-        if obj_id:
-            try:
-                gm = GroupMatch.objects.select_related('fixture__home_club', 'fixture__away_club').get(pk=obj_id)
-                if db_field.name == 'home_players' and gm.fixture and gm.fixture.home_club:
-                    kwargs['queryset'] = Player.objects.filter(club=gm.fixture.home_club).select_related('club')
-                if db_field.name == 'away_players' and gm.fixture and gm.fixture.away_club:
-                    kwargs['queryset'] = Player.objects.filter(club=gm.fixture.away_club).select_related('club')
-            except GroupMatch.DoesNotExist:
-                pass
-
-        return super().formfield_for_manytomany(db_field, request, **kwargs)
 
     def get_urls(self):
         from django.urls import path
