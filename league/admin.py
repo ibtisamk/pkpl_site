@@ -747,6 +747,33 @@ class KnockoutMatchAdmin(admin.ModelAdmin):
 
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
+    def save_related(self, request, form, formsets, change):
+        """
+        Skip signal during formset save to prevent timeout.
+        """
+        from league.signals import get_skip_rebuild_matches
+        obj = form.instance
+        skip_matches = get_skip_rebuild_matches()
+        skip_matches.add(('knockout', obj.id))
+        
+        try:
+            super().save_related(request, form, formsets, change)
+        finally:
+            skip_matches.discard(('knockout', obj.id))
+    
+    def save_model(self, request, obj, form, change):
+        """Save the match and skip signal."""
+        from league.signals import get_skip_rebuild_matches
+        skip_matches = get_skip_rebuild_matches()
+        if obj.id:
+            skip_matches.add(('knockout', obj.id))
+        
+        try:
+            super().save_model(request, obj, form, change)
+        finally:
+            if obj.id:
+                skip_matches.discard(('knockout', obj.id))
+
 
 # ============================================================
 # TEAM OF THE WEEK

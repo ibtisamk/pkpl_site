@@ -72,6 +72,12 @@ def ensure_team_season_stats_exist(sender, instance, created, **kwargs):
 @receiver(post_save, sender=GroupMatch)
 def update_team_stats(sender, instance, **kwargs):
     match = instance
+    
+    # Check if parent match is in skip list (for admin operations)
+    skip_matches = get_skip_rebuild_matches()
+    if match.id and ('group', match.id) in skip_matches:
+        return
+    
     fixture = match.fixture
     season = fixture.season
 
@@ -376,6 +382,11 @@ def player_match_stats_deleted(sender, instance, **kwargs):
 def rebuild_players_for_group_match(sender, instance, **kwargs):
     match = instance
     
+    # Check if parent match is in skip list (for admin operations)
+    skip_matches = get_skip_rebuild_matches()
+    if match.id and ('group', match.id) in skip_matches:
+        return
+    
     # Skip if flag is set (during admin formset save)
     if getattr(match, '_skip_rebuild_signal', False):
         return
@@ -403,6 +414,12 @@ def rebuild_players_for_group_match(sender, instance, **kwargs):
 @receiver(post_save, sender=KnockoutMatch)
 def rebuild_players_for_knockout_match(sender, instance, **kwargs):
     match = instance
+    
+    # Check if parent match is in skip list (for admin operations)
+    skip_matches = get_skip_rebuild_matches()
+    if match.id and ('knockout', match.id) in skip_matches:
+        return
+    
     season = match.round.season if getattr(match, 'round', None) else None
     if not season or not season.is_active:
         return
