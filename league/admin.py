@@ -268,18 +268,6 @@ class GroupMatchAdmin(admin.ModelAdmin):
             'fixture__group'
         ).prefetch_related('home_players', 'away_players')
 
-    def change_view(self, request, object_id, form_url='', extra_context=None):
-        # Auto-populate players if empty when viewing the form
-        obj = self.get_object(request, object_id)
-        if obj and obj.fixture:
-            if not obj.home_players.exists():
-                home_players = Player.objects.filter(club=obj.fixture.home_club)
-                obj.home_players.set(home_players)
-            if not obj.away_players.exists():
-                away_players = Player.objects.filter(club=obj.fixture.away_club)
-                obj.away_players.set(away_players)
-        return super().change_view(request, object_id, form_url, extra_context)
-
     def get_urls(self):
         from django.urls import path
         urls = super().get_urls()
@@ -310,10 +298,9 @@ class GroupMatchAdmin(admin.ModelAdmin):
 
     def save_related(self, request, form, formsets, change):
         """
-        Skip signal during formset save to prevent timeout, then rebuild stats.
+        Skip signal during formset save to prevent timeout, then trigger signal once.
         """
         from league.signals import get_skip_rebuild_matches
-        from league.models import TeamSeasonStats
         
         obj = form.instance
         skip_matches = get_skip_rebuild_matches()
@@ -323,11 +310,13 @@ class GroupMatchAdmin(admin.ModelAdmin):
             super().save_related(request, form, formsets, change)
         finally:
             skip_matches.discard(('group', obj.id))
-            # Manually trigger stats rebuild after save is complete
-            self._rebuild_team_stats(obj)
+            # Trigger the signal manually once after everything is saved
+            # This avoids multiple signal fires during inline saves
+            from league.signals import update_team_stats
+            update_team_stats(sender=GroupMatch, instance=obj)
     
     def save_model(self, request, obj, form, change):
-        """Save the match, skip signal, then rebuild stats."""
+        """Save the match and skip signal during the save itself."""
         from league.signals import get_skip_rebuild_matches
         skip_matches = get_skip_rebuild_matches()
         if obj.id:
@@ -338,78 +327,6 @@ class GroupMatchAdmin(admin.ModelAdmin):
         finally:
             if obj.id:
                 skip_matches.discard(('group', obj.id))
-            # Don't rebuild here - wait until save_related is done
-    
-    def _rebuild_team_stats(self, match):
-        """Rebuild team stats for both teams in this match."""
-        from league.models import TeamSeasonStats
-        
-        fixture = match.fixture
-        season = fixture.season
-        
-        if not season.is_active:
-            return
-        
-        home = fixture.home_club
-        away = fixture.away_club
-        
-        # Rebuild stats for BOTH teams
-        for team in [home, away]:
-            stats, _ = TeamSeasonStats.objects.get_or_create(team=team, season=season)
-            
-            # Reset
-            stats.played = 0
-            stats.wins = 0
-            stats.draws = 0
-            stats.losses = 0
-            stats.goals_for = 0
-            stats.goals_against = 0
-            stats.clean_sheets = 0
-            stats.points = 0
-            
-            # Only count matches that were actually played
-            all_matches = (
-                GroupMatch.objects.filter(
-                    fixture__season=season,
-                    fixture__home_club=team,
-                    is_played=True
-                )
-                | GroupMatch.objects.filter(
-                    fixture__season=season,
-                    fixture__away_club=team,
-                    is_played=True
-                )
-            ).distinct()
-            
-            for m in all_matches:
-                stats.played += 1
-                
-                # Determine GF/GA depending on home/away
-                if m.fixture.home_club == team:
-                    gf = m.home_goals
-                    ga = m.away_goals
-                else:
-                    gf = m.away_goals
-                    ga = m.home_goals
-                
-                stats.goals_for += gf
-                stats.goals_against += ga
-                
-                if ga == 0:
-                    stats.clean_sheets += 1
-                
-                # Result
-                if gf > ga:
-                    stats.wins += 1
-                    stats.points += 3
-                elif gf < ga:
-                    stats.losses += 1
-                else:
-                    stats.draws += 1
-                    stats.points += 1
-            
-            stats.goal_difference = stats.goals_for - stats.goals_against
-            stats.save()
 
     # Removed formfield_for_manytomany override; not needed for custom Group model
 
