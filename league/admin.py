@@ -266,7 +266,7 @@ class GroupMatchAdmin(admin.ModelAdmin):
             'fixture__home_club',
             'fixture__away_club',
             'fixture__group'
-        ).prefetch_related('home_players', 'away_players')
+        )
 
     def get_urls(self):
         from django.urls import path
