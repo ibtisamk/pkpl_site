@@ -709,21 +709,45 @@ def ppl3_rankings(request):
         # Calculate weekly skill rating for each player
         players_list = []
         for stat in weekly_stats:
-            # Simplified weekly skill rating calculation
+            # Get stats
             apps = stat['appearances'] or 1
             goals = stat['goals'] or 0
             assists = stat['assists'] or 0
             avg_rating = stat['avg_rating'] or 0
             clean_sheets = stat['clean_sheets'] or 0
+            position = stat['player__position']
             
-            # Weekly Skill Rating formula
-            weekly_sr = (
-                (avg_rating * 10) +
-                (goals * 15) +
-                (assists * 10) +
-                (clean_sheets * 8) +
-                (apps * 5)
-            ) / apps
+            # Calculate contribution score per match (same as season SR logic)
+            attackers = ['ST', 'LW', 'RW']
+            midfielders = ['CAM', 'CM']
+            defenders = ['LB', 'CB', 'RB']
+            goalkeepers = ['GK']
+            
+            total_contribution = 0.0
+            if position in attackers:
+                total_contribution = (goals * 5) + (assists * 3)
+                max_per_match = 15
+            elif position in midfielders:
+                total_contribution = (goals * 5) + (assists * 3)
+                max_per_match = 12
+            elif position in defenders:
+                total_contribution = (goals * 6) + (assists * 5) + (clean_sheets * 3)
+                max_per_match = 10
+            elif position in goalkeepers:
+                total_contribution = clean_sheets * 3
+                max_per_match = 8
+            else:
+                total_contribution = (goals * 5) + (assists * 3) + (clean_sheets * 2)
+                max_per_match = 12
+            
+            # Apply per-match cap
+            max_total_allowed = max_per_match * apps
+            total_contribution = min(total_contribution, max_total_allowed)
+            contribution_per_match = total_contribution / apps
+            
+            # Weekly Skill Rating formula (same as season SR)
+            # 80% match rating + 20% contribution
+            weekly_sr = (0.8 * avg_rating) + (0.2 * contribution_per_match)
             
             # Get season skill rating from PlayerSeasonStats for reference
             try:
