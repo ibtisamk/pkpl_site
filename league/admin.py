@@ -294,6 +294,14 @@ class GroupMatchAdmin(admin.ModelAdmin):
     
     away_squad_display.short_description = "Away Team Squad"
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Optimize fixture dropdown by prefetching related objects"""
+        if db_field.name == "fixture":
+            kwargs["queryset"] = Fixture.objects.select_related(
+                'season', 'home_club', 'away_club', 'group'
+            ).order_by('-date')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related(
