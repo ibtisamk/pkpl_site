@@ -268,17 +268,17 @@ class GroupMatchAdmin(admin.ModelAdmin):
             'fixture__group'
         ).prefetch_related('home_players', 'away_players')
 
-    def get_form(self, request, obj=None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-        
-        # Auto-populate home_players and away_players if match exists but fields are empty
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        # Auto-populate players if empty when viewing the form
+        obj = self.get_object(request, object_id)
         if obj and obj.fixture:
             if not obj.home_players.exists():
-                form.base_fields['home_players'].initial = Player.objects.filter(club=obj.fixture.home_club)
+                home_players = Player.objects.filter(club=obj.fixture.home_club)
+                obj.home_players.set(home_players)
             if not obj.away_players.exists():
-                form.base_fields['away_players'].initial = Player.objects.filter(club=obj.fixture.away_club)
-        
-        return form
+                away_players = Player.objects.filter(club=obj.fixture.away_club)
+                obj.away_players.set(away_players)
+        return super().change_view(request, object_id, form_url, extra_context)
 
     def get_urls(self):
         from django.urls import path
