@@ -258,6 +258,13 @@ class GroupMatchAdmin(admin.ModelAdmin):
     inlines = [PlayerMatchStatsGroupInline]
     autocomplete_fields = ['home_players', 'away_players']
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "fixture":
+            kwargs["queryset"] = Fixture.objects.select_related(
+                'season', 'home_club', 'away_club', 'group'
+            ).order_by('-date')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related(
