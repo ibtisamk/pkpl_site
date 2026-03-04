@@ -633,28 +633,30 @@ def ppl3_rankings(request):
     """
     PPL3 player rankings with filtering by position and gameweek.
     """
+    from django.db.models import Sum, Count, Avg, Q, F, Case, When, IntegerField
+    
     season = Season.objects.filter(is_active=True).first()
     if not season:
         return render(request, "league/ppl3/rankings.html", {"season": None})
 
     # Get filter parameters
     position_filter = request.GET.get('position', 'all')
-    gameweek_filter = request.GET.get('gameweek', 'all')
+    week_from = request.GET.get('week_from', '')
+    week_to = request.GET.get('week_to', '')
     qualified_only = request.GET.get('qualified', 'false') == 'true'
 
-    # Base queryset
-    players_qs = (
-        PlayerSeasonStats.objects
-        .filter(season=season, appearances__gte=1)
-        .select_related('player', 'club', 'player__club')
-    )
+    # Determine if we're using weekly filtering
+    use_weekly_filter = bool(week_from or week_to)
     
-    # Apply qualified filter (minimum 30% of games)
-    min_qualified_games = 5  # Roughly 20% of 26 games
-    if qualified_only:
-        players_qs = players_qs.filter(appearances__gte=min_qualified_games)
+    # Convert to integers if provided
+    try:
+        week_from_int = int(week_from) if week_from else None
+        week_to_int = int(week_to) if week_to else None
+    except ValueError:
+        week_from_int = None
+        week_to_int = None
 
-    # Apply position filter
+    # Position map for filtering
     position_map = {
         'attackers': ['ST', 'LW', 'RW'],
         'midfielders': ['CM', 'CDM', 'CAM'],
@@ -662,25 +664,170 @@ def ppl3_rankings(request):
         'goalkeepers': ['GK'],
     }
 
-    if position_filter in position_map:
-        players_qs = players_qs.filter(player__position__in=position_map[position_filter])
+    if use_weekly_filter and (week_from_int or week_to_int):
+        # WEEKLY AGGREGATION FROM PLAYERMATCHSTATS
+        match_stats_filter = Q(
+            group_match__fixture__season=season,
+            group_match__is_played=True
+        )
+        
+        if week_from_int:
+            match_stats_filter &= Q(group_match__fixture__week_number__gte=week_from_int)
+        if week_to_int:
+            match_stats_filter &= Q(group_match__fixture__week_number__lte=week_to_int)
+        
+        # Apply position filter if needed
+        if position_filter in position_map:
+            match_stats_filter &= Q(player__position__in=position_map[position_filter])
+        
+        # Aggregate stats from PlayerMatchStats
+        weekly_stats = (
+            PlayerMatchStats.objects
+            .filter(match_stats_filter)
+            .values('player', 'player__gamertag', 'player__position', 'player__club__id', 'player__club__name', 'player__club__short_name')
+            .annotate(
+                appearances=Count('id'),
+                goals=Sum('goals'),
+                assists=Sum('assists'),
+                avg_rating=Avg('rating'),
+                # Count clean sheets for defenders/GKs
+                clean_sheets=Count(
+                    Case(
+                        When(
+                            Q(position_played__in=['GK', 'LB', 'CB', 'RB']) &
+                            Q(group_match__fixture__home_club=F('player__club'), group_match__away_goals=0) |
+                            Q(group_match__fixture__away_club=F('player__club'), group_match__home_goals=0),
+                            then=1
+                        ),
+                        output_field=IntegerField()
+                    )
+                )
+            )
+            .filter(appearances__gte=1)
+        )
+        
+        # Calculate weekly skill rating for each player
+        players_list = []
+        for stat in weekly_stats:
+            # Simplified weekly skill rating calculation
+            apps = stat['appearances'] or 1
+            goals = stat['goals'] or 0
+            assists = stat['assists'] or 0
+            avg_rating = stat['avg_rating'] or 0
+            clean_sheets = stat['clean_sheets'] or 0
+            
+            # Weekly Skill Rating formula
+            weekly_sr = (
+                (avg_rating * 10) +
+                (goals * 15) +
+                (assists * 10) +
+                (clean_sheets * 8) +
+                (apps * 5)
+            ) / apps
+            
+            # Get season skill rating from PlayerSeasonStats for reference
+            try:
+                season_stats = PlayerSeasonStats.objects.get(
+                    player_id=stat['player'],
+                    season=season
+                )
+                season_sr = season_stats.skill_rating
+            except PlayerSeasonStats.DoesNotExist:
+                season_sr = 0
+            
+            players_list.append({
+                'player_id': stat['player'],
+                'player_gamertag': stat['player__gamertag'],
+                'player_position': stat['player__position'],
+                'club_id': stat['player__club__id'],
+                'club_name': stat['player__club__name'],
+                'club_short_name': stat['player__club__short_name'],
+                'appearances': apps,
+                'goals': goals,
+                'assists': assists,
+                'clean_sheets': clean_sheets,
+                'avg_rating': round(avg_rating, 2) if avg_rating else 0,
+                'weekly_skill_rating': round(weekly_sr, 2),
+                'season_skill_rating': round(season_sr, 2) if season_sr else 0,
+            })
+        
+        # Sort by weekly skill rating
+        players_list.sort(key=lambda x: (-x['weekly_skill_rating'], -x['goals'], -x['assists']))
+        
+        # Top scorers and assisters for selected weeks
+        top_scorers = sorted(
+            [p for p in players_list if p['goals'] > 0],
+            key=lambda x: (-x['goals'], -x['assists'], -x['weekly_skill_rating'])
+        )
+        
+        top_assisters = sorted(
+            [p for p in players_list if p['assists'] > 0],
+            key=lambda x: (-x['assists'], -x['goals'], -x['weekly_skill_rating'])
+        )
+        
+        players = players_list
+        using_weekly_data = True
+        
+    else:
+        # SEASON TOTALS (DEFAULT)
+        players_qs = (
+            PlayerSeasonStats.objects
+            .filter(season=season, appearances__gte=1)
+            .select_related('player', 'club', 'player__club')
+        )
+        
+        # Apply qualified filter
+        min_qualified_games = 5
+        if qualified_only:
+            players_qs = players_qs.filter(appearances__gte=min_qualified_games)
 
-    # Note: Gameweek filtering would require PlayerMatchStats aggregation
-    # For now, we'll show season totals and add gameweek support later if needed
-    if gameweek_filter != 'all':
+        # Apply position filter
+        if position_filter in position_map:
+            players_qs = players_qs.filter(player__position__in=position_map[position_filter])
+
+        # Order by skill rating
         try:
-            week_num = int(gameweek_filter)
-            # This would require filtering by week_number in fixtures
-            # For now, showing all stats but we can enhance this
-        except ValueError:
-            pass
+            players = players_qs.order_by('-skill_rating', '-rating', '-goals', '-assists')
+            list(players[:1])
+        except ProgrammingError:
+            players = players_qs.defer('skill_rating').order_by('-rating', '-goals', '-assists')
 
-    # Order by skill rating (weighted average), then goals, then assists
-    try:
-        players = players_qs.order_by('-skill_rating', '-rating', '-goals', '-assists')
-        list(players[:1])  # Force evaluation with minimal cost
-    except ProgrammingError:
-        players = players_qs.defer('skill_rating').order_by('-rating', '-goals', '-assists')
+        # Top scorers and assisters (full lists)
+        try:
+            top_scorers = (
+                PlayerSeasonStats.objects
+                .filter(season=season, goals__gt=0)
+                .select_related('player', 'club')
+                .order_by('-goals', '-assists', '-skill_rating')
+            )
+            list(top_scorers[:1])
+        except ProgrammingError:
+            top_scorers = (
+                PlayerSeasonStats.objects
+                .filter(season=season, goals__gt=0)
+                .select_related('player', 'club')
+                .defer('skill_rating')
+                .order_by('-goals', '-assists', '-rating')
+            )
+
+        try:
+            top_assisters = (
+                PlayerSeasonStats.objects
+                .filter(season=season, assists__gt=0)
+                .select_related('player', 'club')
+                .order_by('-assists', '-goals', '-skill_rating')
+            )
+            list(top_assisters[:1])
+        except ProgrammingError:
+            top_assisters = (
+                PlayerSeasonStats.objects
+                .filter(season=season, assists__gt=0)
+                .select_related('player', 'club')
+                .defer('skill_rating')
+                .order_by('-assists', '-goals', '-rating')
+            )
+        
+        using_weekly_data = False
 
     # Position tabs for template
     positions = [
@@ -700,53 +847,21 @@ def ppl3_rankings(request):
         .order_by('week_number')
     )
 
-    # Top scorers and assisters (full lists)
-    try:
-        top_scorers = (
-            PlayerSeasonStats.objects
-            .filter(season=season, goals__gt=0)
-            .select_related('player', 'club')
-            .order_by('-goals', '-assists', '-skill_rating')
-        )
-        list(top_scorers[:1])  # Force evaluation
-    except ProgrammingError:
-        top_scorers = (
-            PlayerSeasonStats.objects
-            .filter(season=season, goals__gt=0)
-            .select_related('player', 'club')
-            .defer('skill_rating')
-            .order_by('-goals', '-assists', '-rating')
-        )
-
-    try:
-        top_assisters = (
-            PlayerSeasonStats.objects
-            .filter(season=season, assists__gt=0)
-            .select_related('player', 'club')
-            .order_by('-assists', '-goals', '-skill_rating')
-        )
-        list(top_assisters[:1])  # Force evaluation
-    except ProgrammingError:
-        top_assisters = (
-            PlayerSeasonStats.objects
-            .filter(season=season, assists__gt=0)
-            .select_related('player', 'club')
-            .defer('skill_rating')
-            .order_by('-assists', '-goals', '-rating')
-        )
-
     return render(request, "league/ppl3/rankings.html", {
         "season": season,
         "players": players,
         "positions": positions,
         "current_position": position_filter,
         "gameweeks": gameweeks,
-        "current_gameweek": gameweek_filter,
+        "week_from": week_from,
+        "week_to": week_to,
         "qualified_only": qualified_only,
-        "min_qualified_games": min_qualified_games,
+        "min_qualified_games": 5,
         "top_scorers": top_scorers,
         "top_assisters": top_assisters,
+        "using_weekly_data": using_weekly_data,
     })
+
 
 
 def upcoming_fixtures(request):

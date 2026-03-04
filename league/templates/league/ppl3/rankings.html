@@ -20,29 +20,73 @@
     <!-- POSITION TABS -->
     <div class="flex flex-wrap justify-center gap-2">
       {% for pos in positions %}
-      <a href="?position={{ pos.key }}{% if current_gameweek != 'all' %}&gameweek={{ current_gameweek }}{% endif %}"
+      <a href="?position={{ pos.key }}{% if week_from %}&week_from={{ week_from }}{% endif %}{% if week_to %}&week_to={{ week_to }}{% endif %}"
          class="px-6 py-2 rounded-full font-semibold transition {% if current_position == pos.key %}bg-yellow-400 text-gray-900{% else %}bg-white/10 text-blue-200 hover:bg-white/20{% endif %}">
         {{ pos.label }}
       </a>
       {% endfor %}
     </div>
 
-    <!-- GAMEWEEK FILTER -->
-    <div class="flex justify-center gap-4 items-center">
-      <label class="text-blue-200 font-semibold">Filter by Gameweek:</label>
-      <select onchange="window.location.href='?position={{ current_position }}&gameweek=' + this.value"
-              class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400">
-        <option value="all" {% if current_gameweek == 'all' %}selected{% endif %}>All Gameweeks</option>
-        {% for gw in gameweeks %}
-        <option value="{{ gw }}" {% if current_gameweek|stringformat:"s" == gw|stringformat:"s" %}selected{% endif %}>
-          Gameweek {{ gw }}
-        </option>
-        {% endfor %}
-      </select>
+    <!-- GAMEWEEK RANGE FILTER -->
+    <div class="flex flex-col md:flex-row justify-center gap-4 items-center bg-white/5 border border-white/10 rounded-xl p-4">
+      <label class="text-blue-200 font-semibold">Filter by Week Range:</label>
+      <div class="flex gap-2 items-center">
+        <select id="week_from"
+                class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400">
+          <option value="">From Week</option>
+          {% for gw in gameweeks %}
+          <option value="{{ gw }}" {% if week_from|stringformat:"s" == gw|stringformat:"s" %}selected{% endif %}>
+            Week {{ gw }}
+          </option>
+          {% endfor %}
+        </select>
+        
+        <span class="text-blue-200">to</span>
+        
+        <select id="week_to"
+                class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400">
+          <option value="">To Week</option>
+          {% for gw in gameweeks %}
+          <option value="{{ gw }}" {% if week_to|stringformat:"s" == gw|stringformat:"s" %}selected{% endif %}>
+            Week {{ gw }}
+          </option>
+          {% endfor %}
+        </select>
+        
+        <button onclick="applyWeekFilter()" 
+                class="px-6 py-2 bg-yellow-400 text-gray-900 rounded-lg font-semibold hover:bg-yellow-300 transition">
+          Apply
+        </button>
+        
+        <button onclick="clearWeekFilter()" 
+                class="px-6 py-2 bg-white/10 text-blue-200 rounded-lg font-semibold hover:bg-white/20 transition">
+          Clear
+        </button>
+      </div>
     </div>
+    
+    <script>
+      function applyWeekFilter() {
+        const weekFrom = document.getElementById('week_from').value;
+        const weekTo = document.getElementById('week_to').value;
+        let url = '?position={{ current_position }}';
+        if (weekFrom) url += '&week_from=' + weekFrom;
+        if (weekTo) url += '&week_to=' + weekTo;
+        window.location.href = url;
+      }
+      
+      function clearWeekFilter() {
+        window.location.href = '?position={{ current_position }}';
+      }
+    </script>
 
     <!-- RANKINGS TABLE -->
     <div class="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-xl overflow-x-auto">
+      {% if using_weekly_data %}
+      <div class="mb-4 text-center text-yellow-300 font-semibold">
+        📊 Showing stats for Week {{ week_from|default:"1" }}{% if week_to and week_to != week_from %} to {{ week_to }}{% endif %}
+      </div>
+      {% endif %}
       <table class="w-full text-sm">
         <thead>
           <tr class="text-blue-200/80 border-b border-white/10">
@@ -54,7 +98,12 @@
             <th class="px-4 py-3 text-center">Goals</th>
             <th class="px-4 py-3 text-center">Assists</th>
             <th class="px-4 py-3 text-center">Clean Sheets</th>
+            {% if using_weekly_data %}
+            <th class="px-4 py-3 text-center">Weekly SR</th>
+            <th class="px-4 py-3 text-center">Season SR</th>
+            {% else %}
             <th class="px-4 py-3 text-center">Skill Rating</th>
+            {% endif %}
             <th class="px-4 py-3 text-center">Avg Rating</th>
           </tr>
         </thead>
@@ -71,28 +120,51 @@
               {% endif %}
             </td>
             <td class="px-4 py-3">
+              {% if using_weekly_data %}
+              <a href="{% url 'ppl3_player' stat.player_id %}" 
+                 class="font-semibold hover:text-yellow-300 transition">
+                {{ stat.player_gamertag }}
+              </a>
+              {% else %}
               <a href="{% url 'ppl3_player' stat.player.id %}" 
                  class="font-semibold hover:text-yellow-300 transition">
                 {{ stat.player.gamertag }}
               </a>
+              {% endif %}
             </td>
-            <td class="px-4 py-3 text-center text-blue-200/80">{{ stat.player.position }}</td>
+            <td class="px-4 py-3 text-center text-blue-200/80">
+              {% if using_weekly_data %}{{ stat.player_position }}{% else %}{{ stat.player.position }}{% endif %}
+            </td>
             <td class="px-4 py-3 text-center">
+              {% if using_weekly_data %}
+              <a href="{% url 'ppl3_team' stat.club_id %}" 
+                 class="text-blue-200/80 hover:text-yellow-300 transition">
+                {{ stat.club_short_name|default:stat.club_name }}
+              </a>
+              {% else %}
               <a href="{% url 'ppl3_team' stat.club.id %}" 
                  class="text-blue-200/80 hover:text-yellow-300 transition">
                 {{ stat.club.short_name|default:stat.club.name }}
               </a>
+              {% endif %}
             </td>
             <td class="px-4 py-3 text-center">{{ stat.appearances }}</td>
             <td class="px-4 py-3 text-center font-bold text-yellow-300">{{ stat.goals }}</td>
             <td class="px-4 py-3 text-center text-blue-300">{{ stat.assists }}</td>
             <td class="px-4 py-3 text-center">{{ stat.clean_sheets }}</td>
+            {% if using_weekly_data %}
+            <td class="px-4 py-3 text-center font-extrabold text-2xl text-yellow-400">{{ stat.weekly_skill_rating }}</td>
+            <td class="px-4 py-3 text-center text-gray-400 text-sm">{{ stat.season_skill_rating }}</td>
+            {% else %}
             <td class="px-4 py-3 text-center font-extrabold text-2xl text-yellow-400">{{ stat.skill_rating|floatformat:2 }}</td>
-            <td class="px-4 py-3 text-center text-green-400">{{ stat.rating|floatformat:2 }}</td>
+            {% endif %}
+            <td class="px-4 py-3 text-center text-green-400">
+              {% if using_weekly_data %}{{ stat.avg_rating }}{% else %}{{ stat.rating|floatformat:2 }}{% endif %}
+            </td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="10" class="px-4 py-12 text-center text-blue-200/70">
+            <td colspan="{% if using_weekly_data %}11{% else %}10{% endif %}" class="px-4 py-12 text-center text-blue-200/70">
               No player statistics available for this filter.
             </td>
           </tr>
@@ -128,16 +200,30 @@
               {% endif %}
             </td>
             <td class="px-4 py-3">
-              <a href="{% url 'ppl3_player' stat.player.id %}" 
-                 class="font-semibold hover:text-yellow-300 transition">
-                {{ stat.player.gamertag }}
-              </a>
+              {% if using_weekly_data %}
+                <a href="{% url 'ppl3_player' stat.player_id %}" 
+                   class="font-semibold hover:text-yellow-300 transition">
+                  {{ stat.player_gamertag }}
+                </a>
+              {% else %}
+                <a href="{% url 'ppl3_player' stat.player.id %}" 
+                   class="font-semibold hover:text-yellow-300 transition">
+                  {{ stat.player.gamertag }}
+                </a>
+              {% endif %}
             </td>
             <td class="px-4 py-3 text-center">
-              <a href="{% url 'ppl3_team' stat.club.id %}" 
-                 class="text-blue-200/80 hover:text-yellow-300 transition">
-                {{ stat.club.short_name|default:stat.club.name }}
-              </a>
+              {% if using_weekly_data %}
+                <a href="{% url 'ppl3_team' stat.club_id %}" 
+                   class="text-blue-200/80 hover:text-yellow-300 transition">
+                  {{ stat.club_short_name|default:stat.club_name }}
+                </a>
+              {% else %}
+                <a href="{% url 'ppl3_team' stat.club.id %}" 
+                   class="text-blue-200/80 hover:text-yellow-300 transition">
+                  {{ stat.club.short_name|default:stat.club.name }}
+                </a>
+              {% endif %}
             </td>
             <td class="px-4 py-3 text-center font-bold text-yellow-300">{{ stat.goals }}</td>
             <td class="px-4 py-3 text-center text-blue-300">{{ stat.assists }}</td>
@@ -179,16 +265,30 @@
               {% endif %}
             </td>
             <td class="px-4 py-3">
-              <a href="{% url 'ppl3_player' stat.player.id %}" 
-                 class="font-semibold hover:text-yellow-300 transition">
-                {{ stat.player.gamertag }}
-              </a>
+              {% if using_weekly_data %}
+                <a href="{% url 'ppl3_player' stat.player_id %}" 
+                   class="font-semibold hover:text-yellow-300 transition">
+                  {{ stat.player_gamertag }}
+                </a>
+              {% else %}
+                <a href="{% url 'ppl3_player' stat.player.id %}" 
+                   class="font-semibold hover:text-yellow-300 transition">
+                  {{ stat.player.gamertag }}
+                </a>
+              {% endif %}
             </td>
             <td class="px-4 py-3 text-center">
-              <a href="{% url 'ppl3_team' stat.club.id %}" 
-                 class="text-blue-200/80 hover:text-yellow-300 transition">
-                {{ stat.club.short_name|default:stat.club.name }}
-              </a>
+              {% if using_weekly_data %}
+                <a href="{% url 'ppl3_team' stat.club_id %}" 
+                   class="text-blue-200/80 hover:text-yellow-300 transition">
+                  {{ stat.club_short_name|default:stat.club_name }}
+                </a>
+              {% else %}
+                <a href="{% url 'ppl3_team' stat.club.id %}" 
+                   class="text-blue-200/80 hover:text-yellow-300 transition">
+                  {{ stat.club.short_name|default:stat.club.name }}
+                </a>
+              {% endif %}
             </td>
             <td class="px-4 py-3 text-center font-bold text-blue-300">{{ stat.assists }}</td>
             <td class="px-4 py-3 text-center text-yellow-300">{{ stat.goals }}</td>
