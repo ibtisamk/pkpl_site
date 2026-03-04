@@ -256,13 +256,7 @@ class Fixture(models.Model):
             GroupMatch.objects.get_or_create(fixture=self)
 
     def __str__(self):
-        try:
-            season = self.season.name if hasattr(self, 'season') and self.season else "No Season"
-            home = self.home_club.name if hasattr(self, 'home_club') and self.home_club else "TBD"
-            away = self.away_club.name if hasattr(self, 'away_club') and self.away_club else "TBD"
-            return f"{season} - {home} vs {away}"
-        except Exception:
-            return f"Fixture {self.id if self.id else 'New'}"
+        return f"{self.season} - {self.home_club} vs {self.away_club}"
 
 
 # -------------------------

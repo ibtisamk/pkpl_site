@@ -256,51 +256,7 @@ class GroupMatchAdmin(admin.ModelAdmin):
         'fixture__date',
     )
     inlines = [PlayerMatchStatsGroupInline]
-    readonly_fields = ['home_squad_display', 'away_squad_display']
-    
-    def home_squad_display(self, obj):
-        """Display all players from home club"""
-        if not obj.fixture or not obj.fixture.home_club:
-            return "No home club assigned"
-        
-        from django.utils.html import format_html
-        players = Player.objects.filter(club=obj.fixture.home_club).order_by('position', 'gamertag')
-        
-        if not players.exists():
-            return "No players in squad"
-        
-        player_list = "<br>".join([
-            f"• {p.gamertag} ({p.position})" for p in players
-        ])
-        return format_html(f"<strong>{obj.fixture.home_club.name} Squad:</strong><br>{player_list}")
-    
-    home_squad_display.short_description = "Home Team Squad"
-    
-    def away_squad_display(self, obj):
-        """Display all players from away club"""
-        if not obj.fixture or not obj.fixture.away_club:
-            return "No away club assigned"
-        
-        from django.utils.html import format_html
-        players = Player.objects.filter(club=obj.fixture.away_club).order_by('position', 'gamertag')
-        
-        if not players.exists():
-            return "No players in squad"
-        
-        player_list = "<br>".join([
-            f"• {p.gamertag} ({p.position})" for p in players
-        ])
-        return format_html(f"<strong>{obj.fixture.away_club.name} Squad:</strong><br>{player_list}")
-    
-    away_squad_display.short_description = "Away Team Squad"
-
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        """Optimize fixture dropdown by prefetching related objects"""
-        if db_field.name == "fixture":
-            kwargs["queryset"] = Fixture.objects.select_related(
-                'season', 'home_club', 'away_club', 'group'
-            ).order_by('-date')
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+    autocomplete_fields = ['home_players', 'away_players']
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
