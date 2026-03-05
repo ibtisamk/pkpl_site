@@ -747,7 +747,13 @@ def ppl3_rankings(request):
             
             # Weekly Skill Rating formula (same as season SR)
             # 80% match rating + 20% contribution
-            weekly_sr = (0.8 * avg_rating) + (0.2 * contribution_per_match)
+            base_weekly_sr = (0.8 * avg_rating) + (0.2 * contribution_per_match)
+            
+            # Apply confidence multiplier based on games played (same as season SR)
+            # 0.3 + (0.7 * min(1.0, appearances / 10))
+            # At 5 games: 65% confidence, At 10+ games: 100% confidence
+            confidence = 0.3 + (0.7 * min(1.0, apps / 10.0))
+            weekly_sr = base_weekly_sr * confidence
             
             # Get season skill rating from PlayerSeasonStats for reference
             try:

@@ -529,6 +529,9 @@ class PlayerSeasonStats(models.Model):
         - Match Rating Weight: 80%
         - Contribution Score Weight: 20%
         - SkillRating = (0.8 * AvgMatchRating) + (0.2 * ContributionScore)
+        - Confidence Multiplier: 0.3 + (0.7 * min(1.0, appearances / 10))
+          * At 5 games: 65% confidence
+          * At 10+ games: 100% confidence (full rating)
         
         Contribution scoring is position-based with per-match caps to prevent stat padding.
         """
@@ -543,8 +546,13 @@ class PlayerSeasonStats(models.Model):
         contribution_score = self._get_contribution_points_per_match()
         contribution_component = 0.2 * contribution_score
         
-        # Final weighted skill rating
-        self.skill_rating = match_rating_component + contribution_component
+        # Base skill rating
+        base_skill_rating = match_rating_component + contribution_component
+        
+        # Apply confidence multiplier based on games played
+        # Rewards consistency - players with more games get full rating
+        confidence = 0.3 + (0.7 * min(1.0, self.appearances / 10.0))
+        self.skill_rating = base_skill_rating * confidence
         
         return self.skill_rating
     
