@@ -659,7 +659,7 @@ def ppl3_rankings(request):
     # Position map for filtering
     position_map = {
         'attackers': ['ST', 'LW', 'RW'],
-        'midfielders': ['CM', 'CDM', 'CAM'],
+        'midfielders': ['CM', 'CDM', 'CAM', 'LM', 'RM'],
         'defenders': ['LB', 'CB', 'RB'],
         'goalkeepers': ['GK'],
     }
