@@ -719,7 +719,7 @@ def ppl3_rankings(request):
             
             # Calculate contribution score per match (same as season SR logic)
             attackers = ['ST', 'LW', 'RW']
-            midfielders = ['CAM', 'CM']
+            midfielders = ['CAM', 'CM', 'CDM', 'LM', 'RM']
             defenders = ['LB', 'CB', 'RB']
             goalkeepers = ['GK']
             

@@ -482,7 +482,7 @@ class PlayerSeasonStats(models.Model):
         
         # Determine position category
         attackers = ['ST', 'LW', 'RW']
-        midfielders = ['CAM', 'CM']
+        midfielders = ['CAM', 'CM', 'CDM', 'LM', 'RM']
         defenders = ['LB', 'CB', 'RB']
         goalkeepers = ['GK']
         
