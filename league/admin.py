@@ -346,9 +346,50 @@ class GroupMatchAdmin(admin.ModelAdmin):
 # ============================================================
 
 class FixtureAdmin(admin.ModelAdmin):
-    list_display = ('season', 'home_club', 'away_club', 'date', 'week_number', 'group')
+    list_display = ('season_display', 'home_club_display', 'away_club_display', 'date', 'week_number', 'group_display')
     list_filter = ('season', 'week_number', 'group')
     search_fields = ('home_club__name', 'away_club__name')
+    list_select_related = ('season', 'home_club', 'away_club', 'group')
+
+    def season_display(self, obj):
+        if not obj.season_id:
+            return '-'
+        try:
+            return obj.season
+        except Season.DoesNotExist:
+            return f'Missing Season ({obj.season_id})'
+    season_display.short_description = 'season'
+    season_display.admin_order_field = 'season'
+
+    def home_club_display(self, obj):
+        if not obj.home_club_id:
+            return '-'
+        try:
+            return obj.home_club
+        except Club.DoesNotExist:
+            return f'Missing Club ({obj.home_club_id})'
+    home_club_display.short_description = 'home club'
+    home_club_display.admin_order_field = 'home_club'
+
+    def away_club_display(self, obj):
+        if not obj.away_club_id:
+            return '-'
+        try:
+            return obj.away_club
+        except Club.DoesNotExist:
+            return f'Missing Club ({obj.away_club_id})'
+    away_club_display.short_description = 'away club'
+    away_club_display.admin_order_field = 'away_club'
+
+    def group_display(self, obj):
+        if not obj.group_id:
+            return '-'
+        try:
+            return obj.group
+        except Group.DoesNotExist:
+            return f'Missing Group ({obj.group_id})'
+    group_display.short_description = 'group'
+    group_display.admin_order_field = 'group'
 
 
 # ============================================================

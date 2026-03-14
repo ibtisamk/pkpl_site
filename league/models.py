@@ -256,7 +256,22 @@ class Fixture(models.Model):
             GroupMatch.objects.get_or_create(fixture=self)
 
     def __str__(self):
-        return f"{self.season} - {self.home_club} vs {self.away_club}"
+        try:
+            season = self.season
+        except Season.DoesNotExist:
+            season = f"Missing Season ({self.season_id})"
+
+        try:
+            home = self.home_club
+        except Club.DoesNotExist:
+            home = f"Missing Club ({self.home_club_id})"
+
+        try:
+            away = self.away_club
+        except Club.DoesNotExist:
+            away = f"Missing Club ({self.away_club_id})"
+
+        return f"{season} - {home} vs {away}"
 
 
 # -------------------------
