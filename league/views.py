@@ -1161,25 +1161,36 @@ def ppl3_team(request, club_id):
         "points": 0,
     }
 
-    played_matches = (
+    played_matches = list(
         GroupMatch.objects
         .filter(
             fixture__season=season,
             is_played=True,
         )
         .filter(Q(fixture__home_club=club) | Q(fixture__away_club=club))
-        .select_related('fixture__home_club', 'fixture__away_club')
+        .values(
+            'id',
+            'fixture_id',
+            'home_goals',
+            'away_goals',
+            'fixture__home_club_id',
+            'fixture__away_club_id',
+        )
     )
+
+    played_match_by_fixture_id = {}
+    for match in played_matches:
+        played_match_by_fixture_id[match['fixture_id']] = match
 
     for match in played_matches:
         stats["played"] += 1
 
-        if match.fixture.home_club_id == club.id:
-            goals_for = match.home_goals
-            goals_against = match.away_goals
+        if match['fixture__home_club_id'] == club.id:
+            goals_for = match['home_goals']
+            goals_against = match['away_goals']
         else:
-            goals_for = match.away_goals
-            goals_against = match.home_goals
+            goals_for = match['away_goals']
+            goals_against = match['home_goals']
 
         stats["goals_for"] += goals_for
         stats["goals_against"] += goals_against
@@ -1200,45 +1211,17 @@ def ppl3_team(request, club_id):
         Fixture.objects.filter(season=season, away_club=club).select_related('home_club', 'away_club')
     )
 
-    # Also include knockout matches where this club appears
-    km_list = []
-    try:
-        km_list = list(KnockoutMatch.objects.filter(round__season=season).filter(
-            Q(home_club=club) | Q(away_club=club)
-        ).select_related('home_club', 'away_club', 'round'))
-    except Exception:
-        km_list = []
-
-    def _safe_group_match(fixture):
-        try:
-            return fixture.group_match
-        except GroupMatch.DoesNotExist:
-            return None
-
     fixture_rows = []
     for fixture in fixture_qs.order_by("date"):
-        group_match = _safe_group_match(fixture)
+        group_match = played_match_by_fixture_id.get(fixture.id)
         fixture_rows.append({
             "kind": "fixture",
             "home_name": fixture.home_club.name if fixture.home_club else "-",
             "away_name": fixture.away_club.name if fixture.away_club else "-",
             "date": fixture.date,
-            "played": bool(group_match and group_match.is_played),
-            "score": f"{group_match.home_goals} - {group_match.away_goals}" if group_match and group_match.is_played else None,
-            "detail_url": reverse('ppl3_match_detail', args=[group_match.id]) if group_match else None,
-        })
-
-    # Append knockout matches as safe rows too
-    for km in km_list:
-        fixture_rows.append({
-            "kind": "knockout",
-            "home_name": km.home_club.name if km.home_club else km.home_placeholder,
-            "away_name": km.away_club.name if km.away_club else km.away_placeholder,
-            "date": getattr(km.round, 'start_date', None),
-            "played": km.is_played,
-            "score": f"{km.home_goals} - {km.away_goals}" if km.is_played else None,
-            "detail_url": None,
-            "round_label": str(km.round) if km.round else None,
+            "played": bool(group_match),
+            "score": f"{group_match['home_goals']} - {group_match['away_goals']}" if group_match else None,
+            "detail_url": reverse('ppl3_match_detail', args=[group_match['id']]) if group_match else None,
         })
 
     players = Player.objects.filter(club=club)
