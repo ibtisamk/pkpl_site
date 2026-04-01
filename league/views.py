@@ -931,12 +931,76 @@ def ppl3_groups(request):
     group_data = []
     for group in groups:
         clubs = [gm.club for gm in group.members.all()]
-        standings = (
-            TeamSeasonStats.objects
-            .filter(season=season, team__in=clubs)
-            .select_related('team')
-            .order_by("-points", "-goal_difference", "-goals_for")
+
+        # Build LIVE standings from currently existing played group matches.
+        # This avoids stale cached totals if fixtures/matches were deleted.
+        standings_map = {
+            club.id: {
+                'team': club,
+                'played': 0,
+                'wins': 0,
+                'draws': 0,
+                'losses': 0,
+                'goals_for': 0,
+                'goals_against': 0,
+                'goal_difference': 0,
+                'points': 0,
+            }
+            for club in clubs
+        }
+
+        matches = (
+            GroupMatch.objects
+            .filter(
+                fixture__season=season,
+                fixture__group=group,
+                is_played=True,
+            )
+            .select_related('fixture__home_club', 'fixture__away_club')
         )
+
+        for m in matches:
+            home = m.fixture.home_club
+            away = m.fixture.away_club
+
+            # Guard against any bad/legacy membership data
+            if home.id not in standings_map or away.id not in standings_map:
+                continue
+
+            home_row = standings_map[home.id]
+            away_row = standings_map[away.id]
+
+            home_row['played'] += 1
+            away_row['played'] += 1
+
+            home_row['goals_for'] += m.home_goals
+            home_row['goals_against'] += m.away_goals
+            away_row['goals_for'] += m.away_goals
+            away_row['goals_against'] += m.home_goals
+
+            if m.home_goals > m.away_goals:
+                home_row['wins'] += 1
+                away_row['losses'] += 1
+                home_row['points'] += 3
+            elif m.home_goals < m.away_goals:
+                away_row['wins'] += 1
+                home_row['losses'] += 1
+                away_row['points'] += 3
+            else:
+                home_row['draws'] += 1
+                away_row['draws'] += 1
+                home_row['points'] += 1
+                away_row['points'] += 1
+
+        standings = list(standings_map.values())
+        for row in standings:
+            row['goal_difference'] = row['goals_for'] - row['goals_against']
+
+        standings.sort(
+            key=lambda r: (r['points'], r['goal_difference'], r['goals_for']),
+            reverse=True,
+        )
+
         group_data.append({
             "group": group,
             "standings": standings,
