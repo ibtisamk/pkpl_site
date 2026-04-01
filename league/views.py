@@ -1147,7 +1147,52 @@ def ppl3_team(request, club_id):
     club = get_object_or_404(Club, id=club_id)
     season = Season.objects.filter(is_active=True).first()
 
-    stats = TeamSeasonStats.objects.filter(team=club, season=season).select_related('season').first()
+    # Build LIVE season stats from the currently existing played matches.
+    # This keeps the profile page in sync after deleted duplicate fixtures.
+    stats = {
+        "played": 0,
+        "wins": 0,
+        "draws": 0,
+        "losses": 0,
+        "goals_for": 0,
+        "goals_against": 0,
+        "goal_difference": 0,
+        "points": 0,
+    }
+
+    played_matches = (
+        GroupMatch.objects
+        .filter(
+            fixture__season=season,
+            is_played=True,
+        )
+        .filter(Q(fixture__home_club=club) | Q(fixture__away_club=club))
+        .select_related('fixture__home_club', 'fixture__away_club')
+    )
+
+    for match in played_matches:
+        stats["played"] += 1
+
+        if match.fixture.home_club_id == club.id:
+            goals_for = match.home_goals
+            goals_against = match.away_goals
+        else:
+            goals_for = match.away_goals
+            goals_against = match.home_goals
+
+        stats["goals_for"] += goals_for
+        stats["goals_against"] += goals_against
+
+        if goals_for > goals_against:
+            stats["wins"] += 1
+            stats["points"] += 3
+        elif goals_for < goals_against:
+            stats["losses"] += 1
+        else:
+            stats["draws"] += 1
+            stats["points"] += 1
+
+    stats["goal_difference"] = stats["goals_for"] - stats["goals_against"]
 
     fixture_qs = (
         Fixture.objects.filter(season=season, home_club=club).select_related('home_club', 'away_club', 'group_match') |
