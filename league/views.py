@@ -1196,8 +1196,8 @@ def ppl3_team(request, club_id):
     stats["goal_difference"] = stats["goals_for"] - stats["goals_against"]
 
     fixture_qs = (
-        Fixture.objects.filter(season=season, home_club=club).select_related('home_club', 'away_club', 'group_match') |
-        Fixture.objects.filter(season=season, away_club=club).select_related('home_club', 'away_club', 'group_match')
+        Fixture.objects.filter(season=season, home_club=club).select_related('home_club', 'away_club') |
+        Fixture.objects.filter(season=season, away_club=club).select_related('home_club', 'away_club')
     )
 
     # Also include knockout matches where this club appears
@@ -1209,10 +1209,37 @@ def ppl3_team(request, club_id):
     except Exception:
         km_list = []
 
-    fixtures = list(fixture_qs.order_by("date"))
-    # Append knockout matches to fixtures list so templates can render them too
+    def _safe_group_match(fixture):
+        try:
+            return fixture.group_match
+        except GroupMatch.DoesNotExist:
+            return None
+
+    fixture_rows = []
+    for fixture in fixture_qs.order_by("date"):
+        group_match = _safe_group_match(fixture)
+        fixture_rows.append({
+            "kind": "fixture",
+            "home_name": fixture.home_club.name if fixture.home_club else "-",
+            "away_name": fixture.away_club.name if fixture.away_club else "-",
+            "date": fixture.date,
+            "played": bool(group_match and group_match.is_played),
+            "score": f"{group_match.home_goals} - {group_match.away_goals}" if group_match and group_match.is_played else None,
+            "detail_url": reverse('ppl3_match_detail', args=[group_match.id]) if group_match else None,
+        })
+
+    # Append knockout matches as safe rows too
     for km in km_list:
-        fixtures.append(km)
+        fixture_rows.append({
+            "kind": "knockout",
+            "home_name": km.home_club.name if km.home_club else km.home_placeholder,
+            "away_name": km.away_club.name if km.away_club else km.away_placeholder,
+            "date": getattr(km.round, 'start_date', None),
+            "played": km.is_played,
+            "score": f"{km.home_goals} - {km.away_goals}" if km.is_played else None,
+            "detail_url": None,
+            "round_label": str(km.round) if km.round else None,
+        })
 
     players = Player.objects.filter(club=club)
 
@@ -1220,7 +1247,7 @@ def ppl3_team(request, club_id):
         "club": club,
         "season": season,
         "stats": stats,
-        "fixtures": fixtures,
+        "fixtures": fixture_rows,
         "players": players,
     })
 
