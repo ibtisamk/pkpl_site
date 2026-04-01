@@ -5,6 +5,7 @@ from .models import KnockoutMatch, Season, GroupMembership
 from .services import resolve_knockout_placeholders
 from .models import (
     GroupMatch,
+    Fixture,
     PlayerMatchStats,
     PlayerSeasonStats,
     TeamSeasonStats,
@@ -69,6 +70,67 @@ def ensure_team_season_stats_exist(sender, instance, created, **kwargs):
 # ---------------------------------------------------------
 # TEAM SEASON STATS — ALWAYS REBUILT (NO DOUBLE COUNTING)
 # ---------------------------------------------------------
+def _rebuild_team_stats_for_team(season, team):
+    if not season or not team:
+        return
+
+    stats, _ = TeamSeasonStats.objects.get_or_create(team=team, season=season)
+
+    # Reset
+    stats.played = 0
+    stats.wins = 0
+    stats.draws = 0
+    stats.losses = 0
+    stats.goals_for = 0
+    stats.goals_against = 0
+    stats.clean_sheets = 0
+    stats.points = 0
+
+    # Only count matches that were actually played
+    all_matches = (
+        GroupMatch.objects.filter(
+            fixture__season=season,
+            fixture__home_club=team,
+            is_played=True
+        )
+        | GroupMatch.objects.filter(
+            fixture__season=season,
+            fixture__away_club=team,
+            is_played=True
+        )
+    ).distinct().select_related('fixture')
+
+    for m in all_matches:
+        stats.played += 1
+
+        # Determine GF/GA depending on home/away
+        if m.fixture.home_club_id == team.id:
+            gf = m.home_goals
+            ga = m.away_goals
+        else:
+            gf = m.away_goals
+            ga = m.home_goals
+
+        stats.goals_for += gf
+        stats.goals_against += ga
+
+        if ga == 0:
+            stats.clean_sheets += 1
+
+        # Result
+        if gf > ga:
+            stats.wins += 1
+            stats.points += 3
+        elif gf < ga:
+            stats.losses += 1
+        else:
+            stats.draws += 1
+            stats.points += 1
+
+    stats.goal_difference = stats.goals_for - stats.goals_against
+    stats.save()
+
+
 @receiver(post_save, sender=GroupMatch)
 def update_team_stats(sender, instance, **kwargs):
     match = instance
@@ -88,62 +150,36 @@ def update_team_stats(sender, instance, **kwargs):
     away = fixture.away_club
 
     # Rebuild stats for BOTH teams
-    for team in [home, away]:
-        stats, _ = TeamSeasonStats.objects.get_or_create(team=team, season=season)
+    _rebuild_team_stats_for_team(season, home)
+    _rebuild_team_stats_for_team(season, away)
 
-        # Reset
-        stats.played = 0
-        stats.wins = 0
-        stats.draws = 0
-        stats.losses = 0
-        stats.goals_for = 0
-        stats.goals_against = 0
-        stats.clean_sheets = 0
-        stats.points = 0
 
-        # Only count matches that were actually played
-        all_matches = (
-            GroupMatch.objects.filter(
-                fixture__season=season,
-                fixture__home_club=team,
-                is_played=True
-            )
-            | GroupMatch.objects.filter(
-                fixture__season=season,
-                fixture__away_club=team,
-                is_played=True
-            )
-        ).distinct()
+@receiver(post_delete, sender=GroupMatch)
+def update_team_stats_on_group_match_delete(sender, instance, **kwargs):
+    """Rebuild standings when a GroupMatch row is deleted (including admin deletes)."""
+    fixture = Fixture.objects.filter(id=instance.fixture_id).select_related('season', 'home_club', 'away_club').first()
+    if not fixture:
+        return
 
-        for m in all_matches:
-            stats.played += 1
+    season = fixture.season
+    if not season.is_active:
+        return
 
-            # Determine GF/GA depending on home/away
-            if m.fixture.home_club == team:
-                gf = m.home_goals
-                ga = m.away_goals
-            else:
-                gf = m.away_goals
-                ga = m.home_goals
+    _rebuild_team_stats_for_team(season, fixture.home_club)
+    _rebuild_team_stats_for_team(season, fixture.away_club)
 
-            stats.goals_for += gf
-            stats.goals_against += ga
 
-            if ga == 0:
-                stats.clean_sheets += 1
+@receiver(post_delete, sender=Fixture)
+def update_team_stats_on_fixture_delete(sender, instance, **kwargs):
+    """Rebuild standings when a Fixture row is deleted from admin."""
+    season = Season.objects.filter(id=instance.season_id).first()
+    if not season or not season.is_active:
+        return
 
-            # Result
-            if gf > ga:
-                stats.wins += 1
-                stats.points += 3
-            elif gf < ga:
-                stats.losses += 1
-            else:
-                stats.draws += 1
-                stats.points += 1
-
-        stats.goal_difference = stats.goals_for - stats.goals_against
-        stats.save()
+    home = instance.home_club
+    away = instance.away_club
+    _rebuild_team_stats_for_team(season, home)
+    _rebuild_team_stats_for_team(season, away)
 
 
 # ---------------------------------------------------------
