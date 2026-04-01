@@ -953,8 +953,9 @@ def ppl3_groups(request):
             GroupMatch.objects
             .filter(
                 fixture__season=season,
-                fixture__group=group,
                 is_played=True,
+                fixture__home_club__in=clubs,
+                fixture__away_club__in=clubs,
             )
             .select_related('fixture__home_club', 'fixture__away_club')
         )
