@@ -826,7 +826,7 @@ class TeamOfTheWeekSelectionInline(admin.TabularInline):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "player":
             # This will be enhanced by JavaScript to filter based on position
-            # For now, show top players by skill rating
+            # For now, show all season players by skill rating (no hard cap)
             from .models import PlayerSeasonStats, Season
             
             active_season = Season.objects.filter(is_active=True).first()
@@ -834,8 +834,8 @@ class TeamOfTheWeekSelectionInline(admin.TabularInline):
                 # Get all players ranked by skill rating
                 top_stats = PlayerSeasonStats.objects.filter(
                     season=active_season,
-                    appearances__gte=2
-                ).select_related('player', 'player__club').order_by('-skill_rating')[:50]
+                    appearances__gte=1
+                ).select_related('player', 'player__club').order_by('-skill_rating')
                 
                 # Create choices with rank numbers
                 from django.forms import ModelChoiceField
@@ -1064,30 +1064,20 @@ class TeamOfTheWeekSelectionAdmin(admin.ModelAdmin):
         if db_field.name == "player":
             from .models import PlayerSeasonStats, Season
             from django.forms import ModelChoiceField
-            from django.db.models import Case, When, Q
+            from django.db.models import Case, When
             
             active_season = Season.objects.filter(is_active=True).first()
             if not active_season:
                 return super().formfield_for_foreignkey(db_field, request, **kwargs)
             
-            # Get top players from EACH position to ensure goalkeepers are included
-            position_map = {
-                'ATT': ['ST', 'LW', 'RW'],
-                'MID': ['CAM', 'CM', 'CDM'],
-                'DEF': ['LB', 'CB', 'RB'],
-                'GK': ['GK']
-            }
-            
-            all_stats = []
-            for position_type, player_positions in position_map.items():
-                # Get top 3 goalkeepers, 15 for others
-                limit = 3 if position_type == 'GK' else 15
-                stats = PlayerSeasonStats.objects.filter(
+            # Show all players with at least one appearance.
+            # Avoid hard per-position caps so weekly high performers are selectable.
+            all_stats = list(
+                PlayerSeasonStats.objects.filter(
                     season=active_season,
-                    player__position__in=player_positions,
-                    appearances__gte=2
-                ).select_related('player', 'player__club').order_by('-skill_rating')[:limit]
-                all_stats.extend(list(stats))
+                    appearances__gte=1
+                ).select_related('player', 'player__club').order_by('-skill_rating')
+            )
             
             if not all_stats:
                 return super().formfield_for_foreignkey(db_field, request, **kwargs)
