@@ -1,6 +1,7 @@
 import math
 import random
 from datetime import timedelta
+from contextlib import contextmanager
 
 from django.db import transaction
 from django.utils import timezone
@@ -17,6 +18,27 @@ from .models import (
     KnockoutMatch,
     TeamSeasonStats,
 )
+
+
+# Global flag to skip signal processing during bulk knockout creation
+_SKIP_KNOCKOUT_SIGNALS = False
+
+
+@contextmanager
+def skip_knockout_signals():
+    """Context manager to temporarily disable KnockoutMatch signal handlers during bulk operations."""
+    global _SKIP_KNOCKOUT_SIGNALS
+    old_value = _SKIP_KNOCKOUT_SIGNALS
+    _SKIP_KNOCKOUT_SIGNALS = True
+    try:
+        yield
+    finally:
+        _SKIP_KNOCKOUT_SIGNALS = old_value
+
+
+def should_skip_knockout_signals():
+    """Check if knockout signals should be skipped."""
+    return _SKIP_KNOCKOUT_SIGNALS
 
 
 
@@ -194,6 +216,28 @@ def _resolve_placeholder(season, placeholder):
 
 @transaction.atomic
 def generate_knockouts_for_season(
+    season: Season,
+    qualifiers_per_group: int = None,
+    total_qualified: int = None,
+    random_bracket: bool = False,
+    seeded_bracket: bool = True,
+    two_leg_rounds: bool = False,
+    create_fixtures: bool = False,
+):
+    """Generate knockout brackets with signal handling disabled for performance."""
+    with skip_knockout_signals():
+        return _generate_knockouts_impl(
+            season=season,
+            qualifiers_per_group=qualifiers_per_group,
+            total_qualified=total_qualified,
+            random_bracket=random_bracket,
+            seeded_bracket=seeded_bracket,
+            two_leg_rounds=two_leg_rounds,
+            create_fixtures=create_fixtures,
+        )
+
+
+def _generate_knockouts_impl(
     season: Season,
     qualifiers_per_group: int = None,
     total_qualified: int = None,

@@ -451,6 +451,11 @@ def rebuild_players_for_group_match(sender, instance, **kwargs):
 def rebuild_players_for_knockout_match(sender, instance, **kwargs):
     match = instance
     
+    # Skip during bulk knockout generation for performance
+    from .services import should_skip_knockout_signals
+    if should_skip_knockout_signals():
+        return
+    
     # Check if parent match is in skip list (for admin operations)
     skip_matches = get_skip_rebuild_matches()
     if match.id and ('knockout', match.id) in skip_matches:
