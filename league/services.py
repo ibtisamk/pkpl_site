@@ -432,17 +432,25 @@ def resolve_knockout_placeholders(season: Season):
     """
     Replace placeholders with real teams once standings exist.
     """
-    rounds = KnockoutRound.objects.filter(season=season)
+    unresolved = KnockoutMatch.objects.filter(round__season=season).filter(
+        Q(home_placeholder__isnull=False, home_club__isnull=True)
+        | Q(away_placeholder__isnull=False, away_club__isnull=True)
+    )
 
-    for rnd in rounds:
-        for match in rnd.matches.all():
-            if match.home_placeholder and not match.home_club:
-                match.home_club = _resolve_placeholder(season, match.home_placeholder)
+    for match in unresolved:
+        updates = {}
 
-            if match.away_placeholder and not match.away_club:
-                match.away_club = _resolve_placeholder(season, match.away_placeholder)
+        if match.home_placeholder and not match.home_club:
+            home_team = _resolve_placeholder(season, match.home_placeholder)
+            if home_team:
+                updates["home_club_id"] = home_team.id
 
-            match._skip_signal = True
-            match.save()
+        if match.away_placeholder and not match.away_club:
+            away_team = _resolve_placeholder(season, match.away_placeholder)
+            if away_team:
+                updates["away_club_id"] = away_team.id
+
+        if updates:
+            KnockoutMatch.objects.filter(pk=match.pk).update(**updates)
 
 

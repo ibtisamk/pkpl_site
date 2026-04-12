@@ -495,32 +495,36 @@ def rebuild_players_for_knockout_match(sender, instance, **kwargs):
 
 
 # ---------------------------------------------------------
-# KNOCKOUT MATCH SAVE — RESOLVE PLACEHOLDERS WHEN RESULTS ENTERED
+# KNOCKOUT MATCH SAVE — RESOLVE PLACEHOLDERS WHEN NEEDED
 # ---------------------------------------------------------
 @receiver(post_save, sender=KnockoutMatch)
 def knockout_match_saved(sender, instance, **kwargs):
-    return
+    # Admin edit/save flow can explicitly skip this
+    if getattr(instance, '_skip_rebuild_signal', False):
+        return
 
+    season = instance.round.season if getattr(instance, 'round', None) else None
+    if not season:
+        return
 
-@receiver(post_save, sender=KnockoutMatch)
-def knockout_match_saved(sender, instance, **kwargs):
-    # Prevent recursive triggering
-    if getattr(instance, "_skip_signal", False):
+    # Fast exit: do nothing unless unresolved placeholder slots still exist.
+    has_unresolved_home = KnockoutMatch.objects.filter(
+        round__season=season,
+        home_placeholder__isnull=False,
+        home_club__isnull=True,
+    ).exists()
+    has_unresolved_away = KnockoutMatch.objects.filter(
+        round__season=season,
+        away_placeholder__isnull=False,
+        away_club__isnull=True,
+    ).exists()
+
+    if not (has_unresolved_home or has_unresolved_away):
         return
 
     try:
-        # Mark this instance so internal saves don't re-trigger the signal
-        instance._skip_signal = True
-
-        # Call your resolver
-        resolve_knockout_placeholders(instance.round.season)
-
+        resolve_knockout_placeholders(season)
     except Exception:
         pass
-
-    finally:
-        # Always remove the flag
-        if hasattr(instance, "_skip_signal"):
-            del instance._skip_signal
 
 
