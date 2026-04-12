@@ -792,6 +792,7 @@ class KnockoutMatchAdmin(admin.ModelAdmin):
         """
         from league.signals import get_skip_rebuild_matches
         obj = form.instance
+        obj._skip_rebuild_signal = True
         skip_matches = get_skip_rebuild_matches()
         skip_matches.add(('knockout', obj.id))
         
@@ -799,10 +800,13 @@ class KnockoutMatchAdmin(admin.ModelAdmin):
             super().save_related(request, form, formsets, change)
         finally:
             skip_matches.discard(('knockout', obj.id))
+            if hasattr(obj, '_skip_rebuild_signal'):
+                del obj._skip_rebuild_signal
     
     def save_model(self, request, obj, form, change):
         """Save the match and skip signal."""
         from league.signals import get_skip_rebuild_matches
+        obj._skip_rebuild_signal = True
         skip_matches = get_skip_rebuild_matches()
         if obj.id:
             skip_matches.add(('knockout', obj.id))
@@ -812,6 +816,8 @@ class KnockoutMatchAdmin(admin.ModelAdmin):
         finally:
             if obj.id:
                 skip_matches.discard(('knockout', obj.id))
+            if hasattr(obj, '_skip_rebuild_signal'):
+                del obj._skip_rebuild_signal
 
 
 # ============================================================

@@ -450,6 +450,10 @@ def rebuild_players_for_group_match(sender, instance, **kwargs):
 @receiver(post_save, sender=KnockoutMatch)
 def rebuild_players_for_knockout_match(sender, instance, **kwargs):
     match = instance
+
+    # Explicit per-instance bypass (used by admin save flow)
+    if getattr(match, '_skip_rebuild_signal', False):
+        return
     
     # Skip during bulk knockout generation for performance
     from .services import should_skip_knockout_signals
