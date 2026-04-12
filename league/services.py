@@ -130,6 +130,19 @@ def _decide_knockout_round_name(num_teams: int) -> str:
     raise ValueError(f"Unsupported number of teams for knockout: {num_teams}")
 
 
+def _seed_bracket(clubs: list) -> list:
+    """
+    Create properly seeded bracket pairs: 1v8, 2v7, 3v6, 4v5, etc.
+    Assumes clubs are sorted by seed ranking (best first).
+    Returns list of (home_club, away_club) tuples.
+    """
+    n = len(clubs)
+    pairs = []
+    for i in range(n // 2):
+        pairs.append((clubs[i], clubs[n - 1 - i]))
+    return pairs
+
+
 def _generate_placeholder_pairs(groups, qualifiers_per_group):
     """
     Returns placeholder pairs like:
@@ -230,18 +243,22 @@ def generate_knockouts_for_season(
         # Only create placeholders if none exist yet for this round
         existing_placeholders = round_obj.matches.filter(home_placeholder__isnull=False).exists()
         if existing_placeholders:
-            return round_obj, "PLACEHOLDERS_ALREADY_EXIST"
+            # Return existing placeholder matches
+            placeholder_matches = list(round_obj.matches.filter(home_placeholder__isnull=False))
+            return round_obj, placeholder_matches, []
 
         placeholders = _generate_placeholder_pairs(groups, qualifiers_per_group)
 
+        placeholder_matches = []
         for home_ph, away_ph in placeholders:
-            KnockoutMatch.objects.create(
+            km = KnockoutMatch.objects.create(
                 round=round_obj,
                 home_placeholder=home_ph,
                 away_placeholder=away_ph,
             )
+            placeholder_matches.append(km)
 
-        return round_obj, "PLACEHOLDERS_CREATED"
+        return round_obj, placeholder_matches, []
 
     # CASE 2 — Real teams exist → generate real bracket
     clubs = [ts.team for ts in qualified]
@@ -262,17 +279,30 @@ def generate_knockouts_for_season(
         matches = existing_matches
     else:
         matches = []
-        for i in range(0, num_teams, 2):
-            km = KnockoutMatch.objects.create(
-                round=round_obj,
-                home_club=clubs[i],
-                away_club=clubs[i + 1],
-            )
-            matches.append(km)
+        
+        # Use seeded bracket pairing if seeded_bracket is True
+        if seeded_bracket and not random_bracket:
+            pairs = _seed_bracket(clubs)
+            for home_club, away_club in pairs:
+                km = KnockoutMatch.objects.create(
+                    round=round_obj,
+                    home_club=home_club,
+                    away_club=away_club,
+                )
+                matches.append(km)
+        else:
+            # Sequential pairing for random or non-seeded brackets
+            for i in range(0, num_teams, 2):
+                km = KnockoutMatch.objects.create(
+                    round=round_obj,
+                    home_club=clubs[i],
+                    away_club=clubs[i + 1],
+                )
+                matches.append(km)
 
     # Optionally create Fixtures for each UNIQUE knockout tie (no auto-created Matches)
+    created_fixtures = []
     if create_fixtures:
-        created_fixtures = []
         base_date = timezone.now()
         day_offset = 0
 
@@ -329,9 +359,7 @@ def generate_knockouts_for_season(
 
             day_offset += 1
 
-        return round_obj, matches, created_fixtures
-
-    return round_obj, matches
+    return round_obj, matches, created_fixtures
 
 
 # -----------------------------

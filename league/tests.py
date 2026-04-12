@@ -148,7 +148,7 @@ class KnockoutGenerationTest(TestCase):
         before_km_count = KnockoutMatch.objects.filter(round=rnd_obj).count()
         before_fixture_count = Fixture.objects.filter(season=self.season, group__isnull=True).count()
 
-        res = generate_knockouts_for_season(
+        rnd_obj2, matches2, fixtures2 = generate_knockouts_for_season(
             season=self.season,
             total_qualified=8,
             seeded_bracket=True,
@@ -175,13 +175,14 @@ class KnockoutGenerationTest(TestCase):
                 clubs.append(club)
 
         # First call should create placeholders
-        rnd, status = generate_knockouts_for_season(
+        rnd, matches, fixtures = generate_knockouts_for_season(
             season=s,
             total_qualified=8,
             seeded_bracket=True,
         )
 
-        self.assertEqual(status, 'PLACEHOLDERS_CREATED')
+        # When no fixtures are created, should return empty list for fixtures
+        self.assertEqual(fixtures, [])
         placeholder_count = KnockoutMatch.objects.filter(round=rnd).count()
         self.assertTrue(placeholder_count > 0)
 
