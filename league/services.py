@@ -249,14 +249,16 @@ def generate_knockouts_for_season(
 
         placeholders = _generate_placeholder_pairs(groups, qualifiers_per_group)
 
-        placeholder_matches = []
-        for home_ph, away_ph in placeholders:
-            km = KnockoutMatch.objects.create(
+        # Bulk create placeholder matches for performance
+        placeholder_to_create = [
+            KnockoutMatch(
                 round=round_obj,
                 home_placeholder=home_ph,
                 away_placeholder=away_ph,
             )
-            placeholder_matches.append(km)
+            for home_ph, away_ph in placeholders
+        ]
+        placeholder_matches = KnockoutMatch.objects.bulk_create(placeholder_to_create)
 
         return round_obj, placeholder_matches, []
 
@@ -278,27 +280,43 @@ def generate_knockouts_for_season(
     if existing_matches:
         matches = existing_matches
     else:
-        matches = []
+        # Build list of matches to create
+        matches_to_create = []
         
         # Use seeded bracket pairing if seeded_bracket is True
         if seeded_bracket and not random_bracket:
             pairs = _seed_bracket(clubs)
             for home_club, away_club in pairs:
-                km = KnockoutMatch.objects.create(
+                matches_to_create.append(KnockoutMatch(
                     round=round_obj,
                     home_club=home_club,
                     away_club=away_club,
-                )
-                matches.append(km)
+                ))
         else:
             # Sequential pairing for random or non-seeded brackets
             for i in range(0, num_teams, 2):
-                km = KnockoutMatch.objects.create(
+                matches_to_create.append(KnockoutMatch(
                     round=round_obj,
                     home_club=clubs[i],
                     away_club=clubs[i + 1],
-                )
-                matches.append(km)
+                ))
+        
+        # Bulk create all matches at once (skips individual save signals for performance)
+        matches = KnockoutMatch.objects.bulk_create(matches_to_create)
+        
+        # Now populate players for each match in bulk
+        for km in matches:
+            km._skip_auto_populate = False
+            try:
+                if km.home_club and km.away_club:
+                    home_players = list(km.home_club.players.all())
+                    away_players = list(km.away_club.players.all())
+                    if home_players:
+                        km.home_players.set(home_players)
+                    if away_players:
+                        km.away_players.set(away_players)
+            except Exception:
+                pass
 
     # Optionally create Fixtures for each UNIQUE knockout tie (no auto-created Matches)
     created_fixtures = []

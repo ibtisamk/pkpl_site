@@ -687,10 +687,13 @@ class KnockoutMatch(models.Model):
     
     def save(self, *args, **kwargs):
         is_new = self.pk is None
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        skip_auto_populate = getattr(self, '_skip_auto_populate', False)
         super().save(*args, **kwargs)
         
         # Auto-populate players from clubs when first created
-        if is_new and self.home_club and self.away_club:
+        if is_new and self.home_club and self.away_club and not skip_auto_populate:
             try:
                 # Add all players from home club
                 home_club_players = self.home_club.players.all()
