@@ -491,6 +491,13 @@ def ppl3_overview(request):
     rounds = sorted(rounds_qs, key=lambda r: round_order.get(r.round_type, 99))
 
     knockout_data = []
+    knockout_tree = {
+        "R16": [],
+        "QF": [],
+        "SF": [],
+        "F": [],
+        "3P": [],
+    }
     for rnd in rounds:
         formatted_matches = []
 
@@ -529,6 +536,8 @@ def ppl3_overview(request):
 
             formatted_matches.append({
                 "match": m,
+                "home_club": m.home_club,
+                "away_club": m.away_club,
                 "home": home,
                 "away": away,
                 "played": m.is_played,
@@ -539,10 +548,14 @@ def ppl3_overview(request):
             if len(formatted_matches) >= max_display:
                 break
 
-        knockout_data.append({
+        round_payload = {
             "round": rnd,
             "matches": formatted_matches,
-        })
+        }
+        knockout_data.append(round_payload)
+
+        if rnd.round_type in knockout_tree:
+            knockout_tree[rnd.round_type] = formatted_matches
 
     # -----------------------------
     # TOP 10 PLAYERS SNAPSHOT
@@ -622,6 +635,7 @@ def ppl3_overview(request):
         "fixtures": fixtures,
         "results": results,
         "knockouts": knockout_data,
+        "knockout_tree": knockout_tree,
         "top_players": top_players,
         "top_scorers": top_scorers,
         "top_assisters": top_assisters,

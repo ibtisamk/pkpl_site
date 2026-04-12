@@ -16,6 +16,110 @@
       </p>
     </div>
 
+    <!-- KNOCKOUT BRACKET TREE (TOP) -->
+    <section>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold text-yellow-300">Knockout Bracket</h2>
+        <a href="{% url 'ppl3_knockouts' %}" class="text-sm text-blue-300 hover:text-yellow-300 transition">Full Knockouts →</a>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {% if knockout_tree.QF %}
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-xl shadow-xl">
+          <h3 class="text-lg font-semibold text-yellow-300 mb-3">Quarterfinals</h3>
+          <div class="space-y-3">
+            {% for m in knockout_tree.QF %}
+            <div class="bg-black/20 rounded-xl p-3 border border-white/10">
+              <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2 min-w-0">
+                  {% if m.home_club and m.home_club.logo_url %}
+                  <img src="{{ m.home_club.logo_url }}" alt="{{ m.home }}" class="w-6 h-6 rounded-full object-cover" />
+                  {% endif %}
+                  <span class="truncate">{{ m.home }}</span>
+                </div>
+                {% if m.played %}<span class="font-bold text-yellow-300">{{ m.match.home_goals }}</span>{% endif %}
+              </div>
+              <div class="flex items-center justify-between gap-3 mt-1">
+                <div class="flex items-center gap-2 min-w-0">
+                  {% if m.away_club and m.away_club.logo_url %}
+                  <img src="{{ m.away_club.logo_url }}" alt="{{ m.away }}" class="w-6 h-6 rounded-full object-cover" />
+                  {% endif %}
+                  <span class="truncate">{{ m.away }}</span>
+                </div>
+                {% if m.played %}<span class="font-bold text-yellow-300">{{ m.match.away_goals }}</span>{% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        {% if knockout_tree.SF %}
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-xl shadow-xl">
+          <h3 class="text-lg font-semibold text-yellow-300 mb-3">Semifinals</h3>
+          <div class="space-y-3">
+            {% for m in knockout_tree.SF %}
+            <div class="bg-black/20 rounded-xl p-3 border border-white/10">
+              <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2 min-w-0">
+                  {% if m.home_club and m.home_club.logo_url %}
+                  <img src="{{ m.home_club.logo_url }}" alt="{{ m.home }}" class="w-6 h-6 rounded-full object-cover" />
+                  {% endif %}
+                  <span class="truncate">{{ m.home }}</span>
+                </div>
+                {% if m.played %}<span class="font-bold text-yellow-300">{{ m.match.home_goals }}</span>{% endif %}
+              </div>
+              <div class="flex items-center justify-between gap-3 mt-1">
+                <div class="flex items-center gap-2 min-w-0">
+                  {% if m.away_club and m.away_club.logo_url %}
+                  <img src="{{ m.away_club.logo_url }}" alt="{{ m.away }}" class="w-6 h-6 rounded-full object-cover" />
+                  {% endif %}
+                  <span class="truncate">{{ m.away }}</span>
+                </div>
+                {% if m.played %}<span class="font-bold text-yellow-300">{{ m.match.away_goals }}</span>{% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        {% if knockout_tree.F %}
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-xl shadow-xl">
+          <h3 class="text-lg font-semibold text-yellow-300 mb-3">Final</h3>
+          <div class="space-y-3">
+            {% for m in knockout_tree.F %}
+            <div class="bg-black/20 rounded-xl p-3 border border-white/10">
+              <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2 min-w-0">
+                  {% if m.home_club and m.home_club.logo_url %}
+                  <img src="{{ m.home_club.logo_url }}" alt="{{ m.home }}" class="w-6 h-6 rounded-full object-cover" />
+                  {% endif %}
+                  <span class="truncate">{{ m.home }}</span>
+                </div>
+                {% if m.played %}<span class="font-bold text-yellow-300">{{ m.match.home_goals }}</span>{% endif %}
+              </div>
+              <div class="flex items-center justify-between gap-3 mt-1">
+                <div class="flex items-center gap-2 min-w-0">
+                  {% if m.away_club and m.away_club.logo_url %}
+                  <img src="{{ m.away_club.logo_url }}" alt="{{ m.away }}" class="w-6 h-6 rounded-full object-cover" />
+                  {% endif %}
+                  <span class="truncate">{{ m.away }}</span>
+                </div>
+                {% if m.played %}<span class="font-bold text-yellow-300">{{ m.match.away_goals }}</span>{% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      {% if not knockout_tree.R16 and not knockout_tree.QF and not knockout_tree.SF and not knockout_tree.F %}
+      <p class="text-blue-200/70">Knockout bracket not generated yet.</p>
+      {% endif %}
+    </section>
+
     <!-- GROUP SUMMARY -->
     <section>
       <h2 class="text-2xl font-bold mb-4 text-yellow-300">Groups</h2>
@@ -196,83 +300,6 @@
               </tbody>
             </table>
           </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- KNOCKOUT PREVIEW -->
-    <section>
-      <h2 class="text-2xl font-bold mb-4 text-yellow-300">Knockout Rounds</h2>
-
-      <div class="space-y-4">
-        <!-- Finals -->
-        <div>
-          <h3 class="text-lg font-semibold text-yellow-300">Finals</h3>
-          <ul class="mt-2 space-y-1 text-sm text-blue-100/80">
-            {% for r in knockouts %}
-              {% if r.round.round_type == 'F' %}
-                {% for m in r.matches %}
-                <li>
-                  {% if m.detail_url %}
-                    <a href="{{ m.detail_url }}" class="font-semibold text-blue-200">{{ m.home }} vs {{ m.away }}</a>
-                  {% else %}
-                    <span class="font-semibold text-blue-200">{{ m.home }} vs {{ m.away }}</span>
-                  {% endif %}
-                  {% if m.played %}
-                    <span class="text-yellow-300 font-bold"> — {{ m.score }}</span>
-                  {% endif %}
-                </li>
-                {% endfor %}
-              {% endif %}
-            {% endfor %}
-          </ul>
-        </div>
-
-        <!-- Semi-finals -->
-        <div>
-          <h3 class="text-lg font-semibold text-yellow-300">Semi-finals</h3>
-          <ul class="mt-2 space-y-1 text-sm text-blue-100/80">
-            {% for r in knockouts %}
-              {% if r.round.round_type == 'SF' %}
-                {% for m in r.matches %}
-                <li>
-                  {% if m.detail_url %}
-                    <a href="{{ m.detail_url }}" class="font-semibold text-blue-200">{{ m.home }} vs {{ m.away }}</a>
-                  {% else %}
-                    <span class="font-semibold text-blue-200">{{ m.home }} vs {{ m.away }}</span>
-                  {% endif %}
-                  {% if m.played %}
-                    <span class="text-yellow-300 font-bold"> — {{ m.score }}</span>
-                  {% endif %}
-                </li>
-                {% endfor %}
-              {% endif %}
-            {% endfor %}
-          </ul>
-        </div>
-
-        <!-- Quarter-finals -->
-        <div>
-          <h3 class="text-lg font-semibold text-yellow-300">Quarter-finals</h3>
-          <ul class="mt-2 space-y-1 text-sm text-blue-100/80">
-            {% for r in knockouts %}
-              {% if r.round.round_type == 'QF' %}
-                {% for m in r.matches %}
-                <li>
-                  {% if m.detail_url %}
-                    <a href="{{ m.detail_url }}" class="font-semibold text-blue-200">{{ m.home }} vs {{ m.away }}</a>
-                  {% else %}
-                    <span class="font-semibold text-blue-200">{{ m.home }} vs {{ m.away }}</span>
-                  {% endif %}
-                  {% if m.played %}
-                    <span class="text-yellow-300 font-bold"> — {{ m.score }}</span>
-                  {% endif %}
-                </li>
-                {% endfor %}
-              {% endif %}
-            {% endfor %}
-          </ul>
         </div>
 
       </div>
