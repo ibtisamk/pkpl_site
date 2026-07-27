@@ -23,14 +23,14 @@
       <div class="text-center md:text-left space-y-4">
         <p class="uppercase tracking-[0.3em] text-xs text-blue-300">Pakistan Pro Clubs League</p>
         <h1 class="text-4xl md:text-5xl font-extrabold leading-tight">
-          PPL 3.0
+           PPL 3.0 Archive
         </h1>
         <p class="text-lg text-blue-100/80">
-          All the Pakistani Pro Clubs. One stage.  
-          The next chapter of Pakistan’s Pro Clubs story.
+           The final chapter of Pakistan’s Pro Clubs story.  
+           Full groups, standings, and season highlights live here.
         </p>
         <p class="text-sm text-blue-200/80 font-semibold">
-          Season kicks off: <span class="text-yellow-300">February 18, 2026</span>
+           Season status: <span class="text-yellow-300">Completed</span>
         </p>
 
        <!-- HERO BUTTONS -->
@@ -51,35 +51,22 @@
 </div>
 
 
-  <!-- COUNTDOWN SECTION -->
+  <!-- SEASON COMPLETE SECTION -->
   <section class="py-10 px-4">
     <div class="max-w-4xl mx-auto text-center">
-      <h2 class="text-2xl md:text-3xl font-bold mb-3">Countdown to Kickoff</h2>
-      <p class="text-blue-100/80 mb-4 text-sm">
-        PPL 3.0 goes live on February 18, 2026.
+      <h2 class="text-2xl md:text-3xl font-bold mb-3">Season Complete</h2>
+      <p class="text-blue-100/80 mb-5 text-sm">
+        PPL 3.0 has concluded — revisit the full season archive, group standings, knockout bracket, and top-player rankings.
       </p>
-      <div
-        id="countdown"
-        class="inline-flex items-center gap-6 bg-white/5 border border-white/10 rounded-2xl px-8 py-4 backdrop-blur-md shadow-lg text-lg md:text-2xl font-semibold tracking-wide"
-      >
-        <span class="flex flex-col">
-          <span id="cd-days" class="text-yellow-300 text-2xl md:text-3xl">--</span>
-          <span class="text-xs uppercase tracking-wide text-blue-100/70">Days</span>
-        </span>
-        <span class="text-blue-200/60 text-2xl md:text-3xl">:</span>
-        <span class="flex flex-col">
-          <span id="cd-hours" class="text-yellow-300 text-2xl md:text-3xl">--</span>
-          <span class="text-xs uppercase tracking-wide text-blue-100/70">Hours</span>
-        </span>
-        <span class="text-blue-200/60 text-2xl md:text-3xl">:</span>
-        <span class="flex flex-col">
-          <span id="cd-mins" class="text-yellow-300 text-2xl md:text-3xl">--</span>
-          <span class="text-xs uppercase tracking-wide text-blue-100/70">Minutes</span>
-        </span>
+
+      <div class="inline-flex flex-wrap items-center justify-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 backdrop-blur-md shadow-lg">
+        <span class="px-4 py-2 rounded-xl bg-yellow-400/15 text-yellow-300 font-semibold">Completed Season</span>
+        <span class="px-4 py-2 rounded-xl bg-white/10 text-blue-100/90">Groups</span>
+        <span class="px-4 py-2 rounded-xl bg-white/10 text-blue-100/90">Standings</span>
+        <span class="px-4 py-2 rounded-xl bg-white/10 text-blue-100/90">Knockouts</span>
       </div>
-      
-      <!-- Link to Overview after kickoff -->
-      <div id="overview-link" class="mt-6 hidden">
+
+      <div class="mt-6">
         <a
           href="{% url 'ppl3_overview' %}"
           class="inline-flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-blue-500/30 transition"
@@ -132,7 +119,7 @@
   <section class="py-10 px-4">
     <div class="max-w-4xl mx-auto text-center space-y-3">
       <p class="text-blue-100/80 text-sm">
-        This is just the beginning of PPL 3.0. Fixtures, stats, stories, and archives are next.
+          PPL 3.0 is complete. Use the overview to revisit groups, standings, knockout paths, and the season recap.
       </p>
       <a
         href="/"
@@ -144,30 +131,5 @@
   </section>
 
 </div>
-
-<!-- COUNTDOWN SCRIPT -->
-<script>
-  const kickoff = new Date("Feb 18, 2026 00:00:00").getTime();
-  function updateCountdown() {
-    const now = new Date().getTime();
-    const diff = kickoff - now;
-
-    if (diff <= 0) {
-      document.getElementById("countdown").innerHTML = "PPL 3.0 HAS KICKED OFF";
-      document.getElementById("overview-link").classList.remove("hidden");
-      return;
-    }
-
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-    document.getElementById("cd-days").innerText = days;
-    document.getElementById("cd-hours").innerText = hours;
-    document.getElementById("cd-mins").innerText = mins;
-  }
-  updateCountdown();
-  setInterval(updateCountdown, 60000);
-</script>
 
 {% endblock %}

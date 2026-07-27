@@ -29,29 +29,38 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-secret-key")
 
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
+# Configure `ALLOWED_HOSTS`. In production, set the env var `ALLOWED_HOSTS`
+# to a comma-separated list (for example: "example.com,www.example.com").
 if DEBUG:
     ALLOWED_HOSTS = ["*"]
 else:
-    ALLOWED_HOSTS = ["https://railway.com/project/55a5ecea-9216-419a-84bf-3efe01a18568/service/0554cf42-fbf4-4469-81a1-f5bc0a782c29?environmentId=c3e47d5d-d9a6-48be-8b96-9f64420c28bc"]
+    allowed = os.getenv(
+        "ALLOWED_HOSTS",
+        "pkplsite-production.up.railway.app,pakistanprosleague.com,www.pakistanprosleague.com",
+    )
+    ALLOWED_HOSTS = [h.strip() for h in allowed.split(",") if h.strip()]
 
+# Always include common local hosts for convenience when testing locally.
+ALLOWED_HOSTS = list(dict.fromkeys(ALLOWED_HOSTS + ["127.0.0.1", "localhost", "192.168.24.164"]))
 
+# Build CSRF trusted origins from env or from allowed hosts. If you need to
+# override, set `CSRF_TRUSTED_ORIGINS` as a comma-separated env var.
+csrf_env = os.getenv("CSRF_TRUSTED_ORIGINS")
+if csrf_env:
+    CSRF_TRUSTED_ORIGINS = [u.strip() for u in csrf_env.split(",") if u.strip()]
+else:
+    CSRF_TRUSTED_ORIGINS = []
+    for host in ALLOWED_HOSTS:
+        if host in ("127.0.0.1", "localhost", "192.168.24.164"):
+            continue
+        if host.startswith("http://") or host.startswith("https://"):
+            CSRF_TRUSTED_ORIGINS.append(host)
+        else:
+            CSRF_TRUSTED_ORIGINS.append(f"https://{host}")
 
-ALLOWED_HOSTS = ["*",
-    "127.0.0.1",
-    "localhost",
-    "192.168.24.164",
-    "pkplsite-production.up.railway.app",
-]
-
-# Add Railway production domain to CSRF trusted origins so deployed
-# site form POSTs are accepted.
-CSRF_TRUSTED_ORIGINS = [
-    "https://pkplsite-production.up.railway.app",
-]
-# Ensure cookies used for CSRF and sessions are only sent over HTTPS in
-# production. These are safe defaults when serving over TLS.
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
+# Only use secure cookies in production (when DEBUG is False)
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
 
 # Application definition
 
