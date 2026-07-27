@@ -40,8 +40,10 @@ else:
     )
     ALLOWED_HOSTS = [h.strip() for h in allowed.split(",") if h.strip()]
 
-# Always include common local hosts for convenience when testing locally.
-ALLOWED_HOSTS = list(dict.fromkeys(ALLOWED_HOSTS + ["127.0.0.1", "localhost", "192.168.24.164"]))
+# Always include the Railway domain and common local hosts
+ALLOWED_HOSTS = list(dict.fromkeys(
+    ALLOWED_HOSTS + ["pkplsite-production.up.railway.app", "127.0.0.1", "localhost", "192.168.24.164"]
+))
 
 # Build CSRF trusted origins from env or from allowed hosts. If you need to
 # override, set `CSRF_TRUSTED_ORIGINS` as a comma-separated env var.
