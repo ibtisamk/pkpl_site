@@ -21,6 +21,7 @@ from .models import (
     GroupMatch,
     KnockoutRound,
     KnockoutMatch,
+    SeasonAwards,
     TeamOfTheWeek,
     TeamOfTheWeekSelection,
     POSITIONS
@@ -629,6 +630,71 @@ def ppl3_overview(request):
     except Exception:
         pass
 
+    # -----------------------------
+    # SEASON HIGHLIGHTS (CHAMPIONS + AWARDS + TOTS)
+    # -----------------------------
+    season_awards = None
+    try:
+        season_awards = (
+            SeasonAwards.objects
+            .filter(season=season)
+            .select_related(
+                'mvp__club',
+                'top_scorer__club',
+                'top_assister__club',
+                'best_defender__club',
+                'best_midfielder__club',
+            )
+            .first()
+        )
+    except Exception:
+        season_awards = None
+
+    champion_stats = (
+        TeamSeasonStats.objects
+        .filter(season=season, finish_position="champion")
+        .select_related('team')
+        .first()
+    )
+    if not champion_stats:
+        champion_stats = (
+            TeamSeasonStats.objects
+            .filter(season=season)
+            .select_related('team')
+            .order_by('-points', '-goal_difference', '-goals_for')
+            .first()
+        )
+
+    team_of_season = None
+    try:
+        team_of_season = (
+            TeamOfTheWeek.objects
+            .filter(season=season, week_type='TOTS', is_published=True)
+            .prefetch_related('selections__player__club')
+            .order_by('-totw_number', '-created_at')
+            .first()
+        )
+    except Exception:
+        team_of_season = None
+
+    award_stats = {
+        'mvp': None,
+        'top_scorer': None,
+        'top_assister': None,
+        'best_defender': None,
+        'best_midfielder': None,
+    }
+    if season_awards:
+        for key in award_stats.keys():
+            player_obj = getattr(season_awards, key, None)
+            if player_obj:
+                award_stats[key] = (
+                    PlayerSeasonStats.objects
+                    .filter(season=season, player=player_obj)
+                    .select_related('club', 'player')
+                    .first()
+                )
+
     return render(request, "league/ppl3/overview.html", {
         "season": season,
         "groups": group_data,
@@ -640,6 +706,10 @@ def ppl3_overview(request):
         "top_scorers": top_scorers,
         "top_assisters": top_assisters,
         "latest_totw": latest_totw,
+        "season_awards": season_awards,
+        "award_stats": award_stats,
+        "champion_stats": champion_stats,
+        "team_of_season": team_of_season,
     })
 
 
