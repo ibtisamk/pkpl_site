@@ -22,6 +22,7 @@ from .models import (
     KnockoutRound,
     KnockoutMatch,
     SeasonAwards,
+    DraftFranchise,
     TeamOfTheWeek,
     TeamOfTheWeekSelection,
     POSITIONS
@@ -105,11 +106,33 @@ def register_success(request):
 
 
 # ---------------------------------------------------------
-# PPL3 HYPE PAGE (PRE-LAUNCH)
+# PPL HYPE PAGE (DRAFT LEAGUE 2.0)
 # ---------------------------------------------------------
+def pplhype(request):
+    franchises = (
+        DraftFranchise.objects
+        .filter(is_active=True)
+        .prefetch_related('squad_entries__player__club')
+        .order_by('display_order', 'name')
+    )
+
+    fallback_franchises = [
+        {"name": "BALLE BALLE UNITED", "owner": "FAIZAN KHALID"},
+        {"name": "DRAGON BALLERS", "owner": "SHAHMEER SADIK"},
+        {"name": "PARATHA SAINT-GERMAIN", "owner": "TAYYAB NADEEM"},
+        {"name": "DASTAGIR FC", "owner": "JSD BLOOD"},
+        {"name": "WUKONGS", "owner": "ABDULLAH RANJHA"},
+    ]
+
+    return render(request, "league/ppl3hype.html", {
+        "franchises": franchises,
+        "fallback_franchises": fallback_franchises,
+    })
+
+
 def ppl3hype(request):
-    clubs = Club.objects.all().order_by("id")
-    return render(request, "league/ppl3hype.html", {"clubs": clubs})
+    # Legacy URL → new PPL hype page
+    return redirect("pplhype")
 
 
 # ---------------------------------------------------------
@@ -135,7 +158,7 @@ def story(request):
 
 
 def teams(request):
-    return redirect("/ppl3hype/#teams")
+    return redirect("/pplhype/#franchises")
 
 
 def rankings(request):

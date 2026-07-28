@@ -33,9 +33,9 @@ urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 urlpatterns = [
 
     # -----------------------------------------------------
-    # HOMEPAGE → PPL3 HYPE PAGE (PRE-LAUNCH)
+    # HOMEPAGE → PPL HYPE PAGE
     # -----------------------------------------------------
-    path("", lambda request: redirect("ppl3hype"), name="home"),
+    path("", lambda request: redirect("pplhype"), name="home"),
 
     # -----------------------------------------------------
     # DJANGO ADMIN
@@ -46,6 +46,7 @@ urlpatterns = [
     # -----------------------------------------------------
     # STATIC PAGES / ARCHIVE
     # -----------------------------------------------------
+    path("pplhype/", views.pplhype, name="pplhype"),
     path("ppl3hype/", views.ppl3hype, name="ppl3hype"),
     path("story/", views.story, name="story"),
     path("ppl1/", views.ppl1, name="ppl1"),

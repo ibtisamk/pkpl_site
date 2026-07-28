@@ -151,6 +151,61 @@ class Season(models.Model):
 
 
 # -------------------------
+#  DRAFT LEAGUE FRANCHISES
+# -------------------------
+class DraftFranchise(models.Model):
+    season_title = models.CharField(max_length=100, default="DRAFT LEAGUE 2.0")
+    name = models.CharField(max_length=120, unique=True)
+    owner_name = models.CharField(max_length=120)
+    logo = models.ImageField(upload_to='league/pplLogos/', null=True, blank=True)
+    display_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['display_order', 'name']
+
+    def __str__(self):
+        return f"{self.name} — {self.owner_name}"
+
+    @property
+    def logo_url(self):
+        if self.logo:
+            try:
+                import cloudinary
+                return cloudinary.CloudinaryImage(str(self.logo.name)).build_url()
+            except Exception:
+                return self.logo.url if self.logo else None
+        return None
+
+
+class DraftFranchisePlayer(models.Model):
+    franchise = models.ForeignKey(
+        DraftFranchise,
+        on_delete=models.CASCADE,
+        related_name='squad_entries'
+    )
+    player = models.ForeignKey(
+        "Player",
+        on_delete=models.CASCADE,
+        related_name='draft_entries'
+    )
+    sold_price = models.DecimalField(max_digits=10, decimal_places=2)
+    notes = models.CharField(max_length=255, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('franchise', 'player')
+        ordering = ['-sold_price', 'player__gamertag']
+        indexes = [
+            models.Index(fields=['franchise', '-sold_price']),
+            models.Index(fields=['player']),
+        ]
+
+    def __str__(self):
+        return f"{self.player.gamertag} → {self.franchise.name} (£{self.sold_price})"
+
+
+# -------------------------
 #  CLUB / TEAM
 # -------------------------
 class Club(models.Model):

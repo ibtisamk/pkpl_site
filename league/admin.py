@@ -34,6 +34,8 @@ from .models import (
     TeamRegistration,
     TeamRegistrationPlayer,
     PlayerRegistration,
+    DraftFranchise,
+    DraftFranchisePlayer,
     TeamOfTheWeek,
     TeamOfTheWeekSelection,
     REGIONS,
@@ -708,6 +710,33 @@ class SeasonAwardsAdmin(admin.ModelAdmin):
     )
     list_filter = ('season',)
     search_fields = ('season__name',)
+
+
+# ============================================================
+# DRAFT LEAGUE ADMIN
+# ============================================================
+
+class DraftFranchisePlayerInline(admin.TabularInline):
+    model = DraftFranchisePlayer
+    extra = 1
+    autocomplete_fields = ['player']
+    fields = ('player', 'sold_price', 'notes')
+
+
+@admin.register(DraftFranchise)
+class DraftFranchiseAdmin(admin.ModelAdmin):
+    list_display = ('name', 'owner_name', 'season_title', 'display_order', 'is_active')
+    list_filter = ('is_active', 'season_title')
+    search_fields = ('name', 'owner_name')
+    inlines = [DraftFranchisePlayerInline]
+
+
+@admin.register(DraftFranchisePlayer)
+class DraftFranchisePlayerAdmin(admin.ModelAdmin):
+    list_display = ('player', 'franchise', 'sold_price', 'created_at')
+    list_filter = ('franchise',)
+    search_fields = ('player__gamertag', 'franchise__name')
+    autocomplete_fields = ['player', 'franchise']
 
 
 # ============================================================
